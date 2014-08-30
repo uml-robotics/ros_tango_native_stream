@@ -1,0 +1,15 @@
+<launch>
+  <node name="nodelet_manager" type="nodelet" pkg="nodelet" args="manager" output="screen"/>
+
+  <node pkg="nodelet" type="nodelet" name="depth_mm_to_m" args="load depth_image_proc/convert_metric nodelet_manager --no-bond">
+    <remap from="/image_raw" to="/tango/depth/image_raw" />
+    <remap from="/image" to="/tango/depth/image" />
+  </node>
+
+  <node pkg="nodelet" type="nodelet" name="depth_to_xyz" args="load depth_image_proc/point_cloud_xyz nodelet_manager --no-bond">
+     <remap from="/image_rect" to="/tango/depth/image" />
+     <remap from="/camera_info" to="/tango/depth/camera_info" />
+    <remap from="/points" to="/tango/points" />
+  </node>
+
+</launch>

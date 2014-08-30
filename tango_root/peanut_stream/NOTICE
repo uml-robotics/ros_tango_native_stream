@@ -1,0 +1,3 @@
+Portions of the code, specifically, the Unity>ROS transformation and CameraInfo publisher
+are based on Ologic's (https://github.com/ologic/Tango)
+

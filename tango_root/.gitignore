@@ -1,0 +1,13 @@
+obj/
+build/
+.idea/
+.gradle/
+*/obj/
+*/build/
+*/.idea/
+*/.gradle/
+./peanut_stream/build/
+tango_root.iml
+local.properties
+*/peanut_stream.iml/
+local.properties

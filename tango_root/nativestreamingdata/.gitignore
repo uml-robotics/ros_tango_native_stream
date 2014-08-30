@@ -1,0 +1,11 @@
+.classpath
+.cproject
+.project
+.settings
+bin
+gen
+libs
+obj
+lint.xml
+build
+nativestreamingdata.iml

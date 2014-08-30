@@ -1,0 +1,1 @@
+Either, set ANDROID_NDK_HOME in your env, or set ndk.dir in your local.properties. In either case, ndk-build must be on your path.
