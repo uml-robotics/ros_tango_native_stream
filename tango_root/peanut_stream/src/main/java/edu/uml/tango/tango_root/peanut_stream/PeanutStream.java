@@ -99,18 +99,7 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
         setContentView(R.layout.main);
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-   //     SharedPreferences.Editor editor = preferences.edit();
-  //      editor.putString("Name","Harneet");
- //       editor.apply();
-
-        //SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-       // String name = preferences.getString("Name","");
-       // if(!name.equalsIgnoreCase(""))
-        //{
-       //     name = name+"  Sethi";  /* Edit the value here*/
-       // }
-
-
+        
         if(posePub == null) {
             posePub = new PositionPublisher();
             posePub.setParentId(sharedPreferences.getString("e1_text",getResources().getString(R.string.parent_id)));
