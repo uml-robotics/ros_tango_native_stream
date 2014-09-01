@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">PeanutStream</string>
     <string name="odom_frame_id">/tango</string>
-    <string name="depth_frame_id">/tango</string>
+    <string name="depth_frame_id">/tango_camera</string>
     <string name="parent_id">/map</string>
     <string name="depth_topic">/tango/depth</string>
     <string name="button_name">Come to me</string>
