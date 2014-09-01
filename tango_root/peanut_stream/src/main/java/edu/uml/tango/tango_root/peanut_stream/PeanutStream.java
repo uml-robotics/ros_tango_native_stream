@@ -165,8 +165,8 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
                 savePreferences("tb2_checked",isChecked);
             }
         });
-        tb1.setChecked(sharedPreferences.getBoolean("tb1_checked",false));
-        tb2.setChecked(sharedPreferences.getBoolean("tb2_checked",false));
+        tb1.setChecked(sharedPreferences.getBoolean("tb1_checked",true));
+        tb2.setChecked(sharedPreferences.getBoolean("tb2_checked",true));
 
         Button b = (Button) findViewById(R.id.gotoButton);
         b.setOnClickListener(new View.OnClickListener() {
