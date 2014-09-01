@@ -109,18 +109,19 @@ public class TangoAPI extends Thread {
 
     @Override
     public void run() {
+        int res=0;
         while (true) {
             if (mBreakout) {
                 Log.e(TAG, "Breaking out");
                 break;
             }
-            int res = dowork();
+            res = dowork();
             if ((res & UPDATED_DEPTH) != 0)
                 depthReceiver.DepthCallback();
             if ((res & UPDATED_ODOM) != 0)
                 vioReceiver.VIOCallback(tx, ty, tz, rx, ry, rz, rw);
             try {
-                sleep(10);
+                sleep(20);
             } catch (InterruptedException e) {
                 Log.e(TAG, "INSOMNIA", e);
             }
