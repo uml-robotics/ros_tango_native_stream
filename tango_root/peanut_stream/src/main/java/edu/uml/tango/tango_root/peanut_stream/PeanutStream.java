@@ -30,7 +30,10 @@
 
 package edu.uml.tango.tango_root.peanut_stream;
 
+import android.content.res.Resources;
 import android.os.Bundle;
+import android.os.Handler;
+import android.text.format.Formatter;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -38,6 +41,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.ToggleButton;
 import org.ros.address.InetAddressFactory;
 import org.ros.node.NodeConfiguration;
@@ -47,7 +51,7 @@ import android.util.Log;
 
 import edu.uml.TangoAPI;
 
-public class PeanutStream extends RosFragmentActivity {
+public class PeanutStream extends RosFragmentActivity implements RateWatcher.RateUpdater{
     private PositionPublisher posePub;
     private DepthPublisher depthPub;
     private static final String TAG = "TangoJNIActivity";
@@ -55,6 +59,8 @@ public class PeanutStream extends RosFragmentActivity {
         super("peanut_stream", "peanut_stream");
     }
 
+    RateWatcher mRateWatcher = new RateWatcher(this);
+    private Handler mHandler = new Handler();
     TangoAPI mTangoAPI;
 
     // generic specific textbox event handling
@@ -88,9 +94,11 @@ public class PeanutStream extends RosFragmentActivity {
             posePub = new PositionPublisher();
             posePub.setParentId(getResources().getString(R.string.parent_id));
             posePub.setFrameId(getResources().getString(R.string.odom_frame_id));
+            posePub.setRateWatcher(mRateWatcher.add(R.id.odom_rate));
         }
         if(depthPub == null) {
             depthPub = new DepthPublisher(getResources().getString(R.string.depth_topic),getResources().getString(R.string.depth_frame_id));
+            depthPub.setRateWatcher(mRateWatcher.add(R.id.depth_rate));
         }
         mTangoAPI = new TangoAPI(posePub, depthPub);
         mTangoAPI.start();
@@ -150,5 +158,18 @@ public class PeanutStream extends RosFragmentActivity {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         return true;
+    }
+
+    @Override
+    public void update(final int id) {
+        final TextView tv = (TextView)findViewById(id);
+        final Resources res = getResources();
+        mHandler.post(new Runnable() {
+            @Override
+            public void run()
+            {
+                tv.setText(String.format("%.3f %s",mRateWatcher.getRate(id),res.getString(R.string.frequency_suffix)));
+            }
+        });
     }
 }

@@ -5,5 +5,8 @@
     <string name="depth_frame_id">/tango</string>
     <string name="parent_id">/map</string>
     <string name="depth_topic">/tango/depth</string>
+    <string name="frequency_suffix">Hz</string>
+    <string name="odom_frequency_title">Odom Update Rate</string>
+    <string name="depth_frequency_title">Depth Update Rate</string>
 
 </resources>

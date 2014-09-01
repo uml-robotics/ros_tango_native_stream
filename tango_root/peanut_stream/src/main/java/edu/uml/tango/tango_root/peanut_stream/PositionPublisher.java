@@ -29,6 +29,7 @@
 */
 package edu.uml.tango.tango_root.peanut_stream;
 
+import org.ros.message.Time;
 import org.ros.namespace.GraphName;
 import org.ros.node.ConnectedNode;
 import org.ros.node.Node;
@@ -52,11 +53,18 @@ public class PositionPublisher implements TangoAPI.VIOReceiver,NodeMain {
 
     private Odometry mOdom;
 
+    private RateWatcher.RateProvider mRateProvider;
+    public void setRateWatcher(RateWatcher.RateProvider rw)
+    {
+        mRateProvider = rw;
+    }
+
     @Override
     public void VIOCallback(float x, float y, float z, float ox, float oy, float oz, float ow) {
         if(tfMessagePublisher != null && odometryPublisher != null && mOdom != null && okPublish) {
+            Time t = connectedNode.getCurrentTime();
             mOdom.getHeader().setFrameId(parentId);
-            mOdom.getHeader().setStamp(connectedNode.getCurrentTime());
+            mOdom.getHeader().setStamp(t);
             mOdom.getHeader().setSeq(mOdom.getHeader().getSeq()+1);
             mOdom.getPose().getPose().getOrientation().setX(-oz/ow); //transpositions gleaned from OLogic. see NOTICE
             mOdom.getPose().getPose().getOrientation().setY(ox/ow);  //normalization = not
@@ -67,7 +75,7 @@ public class PositionPublisher implements TangoAPI.VIOReceiver,NodeMain {
             mOdom.getPose().getPose().getPosition().setZ(y);
 
             mTFMessage.getTransforms().get(0).getHeader().setFrameId(parentId);
-            mTFMessage.getTransforms().get(0).getHeader().setStamp(connectedNode.getCurrentTime());
+            mTFMessage.getTransforms().get(0).getHeader().setStamp(t);
             mTFMessage.getTransforms().get(0).setChildFrameId(frameId);
             mTFMessage.getTransforms().get(0).getTransform().setRotation(mOdom.getPose().getPose().getOrientation());
             mTFMessage.getTransforms().get(0).getTransform().getTranslation().setX(z);
@@ -76,6 +84,8 @@ public class PositionPublisher implements TangoAPI.VIOReceiver,NodeMain {
 
             tfMessagePublisher.publish(mTFMessage);
             odometryPublisher.publish(mOdom);
+            if (mRateProvider != null)
+                mRateProvider.addStamp(t);
         }
     }
 
