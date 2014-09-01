@@ -36,6 +36,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ToggleButton;
@@ -129,6 +130,14 @@ public class PeanutStream extends RosFragmentActivity {
         });
         tb1.setChecked(true);
         tb2.setChecked(true);
+
+        Button b = (Button) findViewById(R.id.gotoButton);
+        b.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                posePub.publishCurrent();
+            }
+        });
     }
 
     @Override

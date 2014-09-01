@@ -36,6 +36,7 @@ import org.ros.node.NodeMain;
 import org.ros.node.topic.Publisher;
 
 import edu.uml.TangoAPI;
+import geometry_msgs.PoseStamped;
 import geometry_msgs.TransformStamped;
 import nav_msgs.Odometry;
 import tf2_msgs.TFMessage;
@@ -45,23 +46,26 @@ public class PositionPublisher implements TangoAPI.VIOReceiver,NodeMain {
     ConnectedNode connectedNode;
     private Publisher<TFMessage> tfMessagePublisher;
     private Publisher<Odometry> odometryPublisher;
+    private Publisher<PoseStamped> poseStampedPublisher;
 
     private TFMessage mTFMessage;
     private String frameId, parentId;
     private boolean okPublish = true;
 
     private Odometry mOdom;
+    private PoseStamped mPoseStamped;
+    private Boolean sendGoal = false;
 
     @Override
     public void VIOCallback(float x, float y, float z, float ox, float oy, float oz, float ow) {
         if(tfMessagePublisher != null && odometryPublisher != null && mOdom != null && okPublish) {
             mOdom.getHeader().setFrameId(parentId);
             mOdom.getHeader().setStamp(connectedNode.getCurrentTime());
-            mOdom.getHeader().setSeq(mOdom.getHeader().getSeq()+1);
-            mOdom.getPose().getPose().getOrientation().setX(-oz/ow); //transpositions gleaned from OLogic. see NOTICE
-            mOdom.getPose().getPose().getOrientation().setY(ox/ow);  //normalization = not
-            mOdom.getPose().getPose().getOrientation().setZ(-oy/ow);
-            mOdom.getPose().getPose().getOrientation().setW(ow/ow);
+            mOdom.getHeader().setSeq(mOdom.getHeader().getSeq() + 1);
+            mOdom.getPose().getPose().getOrientation().setX(-oz / ow); //transpositions gleaned from OLogic. see NOTICE
+            mOdom.getPose().getPose().getOrientation().setY(ox / ow);  //normalization = not
+            mOdom.getPose().getPose().getOrientation().setZ(-oy / ow);
+            mOdom.getPose().getPose().getOrientation().setW(ow / ow);
             mOdom.getPose().getPose().getPosition().setX(z);
             mOdom.getPose().getPose().getPosition().setY(-x);
             mOdom.getPose().getPose().getPosition().setZ(y);
@@ -76,6 +80,13 @@ public class PositionPublisher implements TangoAPI.VIOReceiver,NodeMain {
 
             tfMessagePublisher.publish(mTFMessage);
             odometryPublisher.publish(mOdom);
+            if(sendGoal) {
+                sendGoal = false;
+                mPoseStamped.getPose().setPosition(mOdom.getPose().getPose().getPosition());
+                mPoseStamped.getPose().getPosition().setZ(0);
+                mPoseStamped.getPose().setOrientation(mOdom.getPose().getPose().getOrientation());
+                poseStampedPublisher.publish(mPoseStamped);
+            }
         }
     }
 
@@ -90,6 +101,10 @@ public class PositionPublisher implements TangoAPI.VIOReceiver,NodeMain {
         this.okPublish = okPublish;
     }
 
+    public void publishCurrent() {
+        sendGoal = true;
+    }
+
     @Override
     public GraphName getDefaultNodeName() {
         return GraphName.of("peanut/position_publisher");
@@ -100,8 +115,9 @@ public class PositionPublisher implements TangoAPI.VIOReceiver,NodeMain {
         this.connectedNode = connectedNode;
         tfMessagePublisher = connectedNode.newPublisher("/tf", TFMessage._TYPE);
         odometryPublisher = connectedNode.newPublisher("/odom", Odometry._TYPE);
+        poseStampedPublisher = connectedNode.newPublisher("/move_base_simple/goal",PoseStamped._TYPE);
 
-        while (mTFMessage == null || mTFMessage.getTransforms().size() == 0 || mOdom == null)
+        while (mTFMessage == null || mTFMessage.getTransforms().size() == 0 || mOdom == null || mPoseStamped == null)
             try {
                 if (mTFMessage == null)
                     mTFMessage = connectedNode.getTopicMessageFactory().newFromType(TFMessage._TYPE);
@@ -109,6 +125,8 @@ public class PositionPublisher implements TangoAPI.VIOReceiver,NodeMain {
                     mTFMessage.getTransforms().add((TransformStamped) connectedNode.getTopicMessageFactory().newFromType(TransformStamped._TYPE));
                 if (mOdom == null)
                     mOdom = connectedNode.getTopicMessageFactory().newFromType(Odometry._TYPE);
+                if(mPoseStamped == null)
+                    mPoseStamped = connectedNode.getTopicMessageFactory().newFromType(PoseStamped._TYPE);
             } catch (Exception ex) {
                 Log.e("PositionPublisher", "Exception while initializing", ex);
             }

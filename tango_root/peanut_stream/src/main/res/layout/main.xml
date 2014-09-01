@@ -140,5 +140,17 @@
                 android:layout_below="@+id/depthTextView"
                 android:layout_alignParentStart="true" />
         </RelativeLayout>
+        <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/button_name"
+                android:id="@+id/gotoButton"
+                ></Button>
+
+            </RelativeLayout>
+
     </LinearLayout>
 </RelativeLayout>

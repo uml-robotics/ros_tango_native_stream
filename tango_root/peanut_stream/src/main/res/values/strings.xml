@@ -5,5 +5,7 @@
     <string name="depth_frame_id">/tango</string>
     <string name="parent_id">/map</string>
     <string name="depth_topic">/tango/depth</string>
+    <string name="button_name">Come to me</string>
+    <string name="goal_topic">/move_base_simple/goal</string>
 
 </resources>
