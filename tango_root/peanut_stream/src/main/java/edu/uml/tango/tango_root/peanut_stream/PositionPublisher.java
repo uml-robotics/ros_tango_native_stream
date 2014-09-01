@@ -50,7 +50,7 @@ public class PositionPublisher implements TangoAPI.VIOReceiver,NodeMain {
 
     private TFMessage mTFMessage;
     private String frameId, parentId;
-    private boolean okPublish = true;
+    private boolean okPublish;
 
     private Odometry mOdom;
     private PoseStamped mPoseStamped;
