@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2014, University Of Massachusetts Lowell
  * All rights reserved.
  *
@@ -26,47 +26,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  * Author: Eric McCann <emccann@cs.uml.edu>
-*/
-#ifndef TANGO_API_JNI_H_
-#define TANGO_API_JNI_H_
+ **/
 
-#include <string.h>
-#include <jni.h>
-#include <android/log.h>
-#include <stdarg.h>
-#include <math.h>
-#include <stdio.h>
-#include <tango-api/public-api.h>
-#include <tango-api/application-interface.h>
-#include <tango-api/hardware-control-interface.h>
-#include <tango-api/util-interface.h>
-#include <tango-api/depth-interface.h>
-#include <tango-api/video-overlay-interface.h>
-#include <tango-api/vio-interface.h>
+package edu.uml;
 
-#define TAG "TangoJNI"
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
-#define LOGW(...) __android_log_print(ANDROID_LOG_WARN, TAG, __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
+public abstract class VIOReceiver {
 
-#define TANGO_DATA_SOURCE "[Superframes Small-Peanut]"
-#define DEPTH_BPP 1
-
-#define CHECK_FAIL(x) (x == kCAPIFail || x == kCAPINotImplemented || x == kCAPIOperationFailed)
-
-void setbufferlength(int length);
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-JNIEXPORT jboolean JNICALL Java_edu_uml_TangoAPI_init(JNIEnv *env);
-JNIEXPORT jboolean JNICALL Java_edu_uml_TangoAPI_deinit(JNIEnv *env);
-JNIEXPORT void JNICALL Java_edu_uml_TangoAPI_setbuffer(JNIEnv *env, jobject caller, jobject buf);
-JNIEXPORT jint JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject caller);
-
-#ifdef __cplusplus
+    public void VIOCallback(float tx, float ty, float tz,
+                            float rx, float ry, float rz, float rw)
+    {
+    }
 }
-#endif
-
-#endif  // TANGO_API_JNI

@@ -37,13 +37,14 @@ import org.ros.node.NodeMain;
 import org.ros.node.topic.Publisher;
 
 import edu.uml.TangoAPI;
+import edu.uml.VIOReceiver;
 import geometry_msgs.PoseStamped;
 import geometry_msgs.TransformStamped;
 import nav_msgs.Odometry;
 import tf2_msgs.TFMessage;
 import android.util.Log;
 
-public class PositionPublisher implements TangoAPI.VIOReceiver,NodeMain {
+public class PositionPublisher extends VIOReceiver implements NodeMain {
     ConnectedNode connectedNode;
     private Publisher<TFMessage> tfMessagePublisher;
     private Publisher<Odometry> odometryPublisher;
@@ -64,7 +65,6 @@ public class PositionPublisher implements TangoAPI.VIOReceiver,NodeMain {
         mRateProvider = rw;
     }
 
-    @Override
     public void VIOCallback(float x, float y, float z, float ox, float oy, float oz, float ow) {
         if(tfMessagePublisher != null && odometryPublisher != null && mOdom != null && okPublish) {
             Time t = connectedNode.getCurrentTime();

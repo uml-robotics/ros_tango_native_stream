@@ -35,10 +35,8 @@ import android.util.Log;
 
 public class TangoAPI extends Thread {
 
-    public interface VIOReceiver {
-        void VIOCallback(float tx, float ty, float tz,
-                         float rx, float ry, float rz, float rw);
-    }
+    private final int UPDATED_DEPTH = 1 << 2;
+    private final int UPDATED_ODOM = 1 << 1;
 
     private VIOReceiver vioReceiver;
     private DepthReceiver depthReceiver;
@@ -46,6 +44,14 @@ public class TangoAPI extends Thread {
     private boolean mBreakout = false;
     private static final String TAG = "TangoApi";
     private boolean ok = true;
+
+    float tx;
+    float ty;
+    float tz;
+    float rx;
+    float ry;
+    float rz;
+    float rw;
 
     public TangoAPI(VIOReceiver vrec, DepthReceiver drec) {
         if (vrec == null) {
@@ -78,15 +84,6 @@ public class TangoAPI extends Thread {
         }
     }
 
-    /*
-     * pass values back from native-land to the implementer of tangoapi.VIOReceiver
-     */
-    public void odomReceived(float tx, float ty, float tz,
-                             float rx, float ry, float rz, float rw) {
-        //Log.i(TAG, "RECEIVED ODOM");
-        vioReceiver.VIOCallback(tx, ty, tz, rx, ry, rz, rw);
-    }
-
     public void die() {
         Log.e(TAG, "DYING");
         mBreakout = true;
@@ -117,10 +114,11 @@ public class TangoAPI extends Thread {
                 Log.e(TAG, "Breaking out");
                 break;
             }
-            if (dowork()) {
-                //Log.e(TAG, "My Buffer be all Like: " + buffer.capacity());
+            int res = dowork();
+            if ((res & UPDATED_DEPTH) != 0)
                 depthReceiver.DepthCallback();
-            }
+            if ((res & UPDATED_ODOM) != 0)
+                vioReceiver.VIOCallback(tx, ty, tz, rx, ry, rz, rw);
             try {
                 sleep(10);
             } catch (InterruptedException e) {
@@ -132,7 +130,7 @@ public class TangoAPI extends Thread {
 
     public native void setbuffer(ByteBuffer b);
 
-    public native boolean dowork();
+    public native int dowork();
 
     public static native boolean init();
 

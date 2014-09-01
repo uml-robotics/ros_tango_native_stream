@@ -66,7 +66,6 @@ public class DepthPublisher extends DepthReceiver implements NodeMain {
     private final double[] P = {237.0, 0.0, 160.0, 0.0, 0.0, 237.0, 90.0, 0.0, 0.0, 0.0, 1.0, 0.0};
     private final String distortionModel = "plumb_bob";
     final int width = 320, height=180;
-    private final ChannelBufferOutputStream stream = new ChannelBufferOutputStream(ChannelBuffers.buffer(ByteOrder.LITTLE_ENDIAN,width*height*2));
 
     public DepthPublisher(String topicName, String frameId)
     {
@@ -88,14 +87,24 @@ public class DepthPublisher extends DepthReceiver implements NodeMain {
             return;
         Time currentTime = connectedNode.getCurrentTime();
         if(depthPublisher != null && mImage != null && buffer !=null) {
+            final ChannelBufferOutputStream stream = new ChannelBufferOutputStream(ChannelBuffers.buffer(ByteOrder.LITTLE_ENDIAN,width*height*2));
             mImage.getHeader().setStamp(currentTime);
             try{
-                stream.buffer().clear();
                 stream.write(buffer.array());
+                buffer.clear();
+                stream.flush();
+                mImage.setData(stream.buffer());
             } catch (IOException ie)
             {
             }
-            mImage.setData(stream.buffer());
+            finally{
+                try {
+                    stream.close();
+                }
+                catch(IOException ie) {
+
+                }
+            }
 
             depthPublisher.publish(mImage);
             if (mRateProvider != null)
@@ -172,14 +181,6 @@ public class DepthPublisher extends DepthReceiver implements NodeMain {
 
     @Override
     public void onShutdown(Node node) {
-        try {
-            if (stream != null)
-                stream.close();
-        }
-        catch(IOException ex)
-        {
-
-        }
     }
 
     @Override

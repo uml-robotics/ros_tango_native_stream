@@ -45,6 +45,10 @@ union depth_stuff_buffer {
 int _depthbufferlength;
 double _depthstamp,_viostamp;
 
+const int UPDATED_NOTHING = 0;
+const int UPDATED_ODOM = 1 << 1;
+const int UPDATED_DEPTH = 1 << 2;
+
 JNIEXPORT jboolean JNICALL Java_edu_uml_TangoAPI_init(JNIEnv *env)
 {
     if (application != NULL)
@@ -126,30 +130,41 @@ JNIEXPORT jboolean JNICALL Java_edu_uml_TangoAPI_deinit(JNIEnv *env)
     return success;
 }
 
-bool sendOdom(JNIEnv *env, jobject caller, VIOStatus viostatus, bool returnval)
+jint sendOdom(JNIEnv *env, jobject caller, VIOStatus viostatus, jint returnval)
 {
     if (viostatus.timestamp == _viostamp)
         return returnval;
-
-    static jmethodID mid = 0;
-    if (mid == 0)
+    static jfieldID tx;
+    static jfieldID ty;
+    static jfieldID tz;
+    static jfieldID rx;
+    static jfieldID ry;
+    static jfieldID rz;
+    static jfieldID rw;
+    if (tx == 0 || ty == 0 || tz == 0 || rx == 0 || ry == 0 || rz == 0 || rw == 0)
     {
         jclass clazz = env->GetObjectClass(caller);
-        mid = env->GetMethodID(clazz, "odomReceived", "(FFFFFFF)V");
+        tx = env->GetFieldID(clazz, "tx", "F");
+        ty = env->GetFieldID(clazz, "ty", "F");
+        tz = env->GetFieldID(clazz, "tz", "F");
+        rx = env->GetFieldID(clazz, "rx", "F");
+        ry = env->GetFieldID(clazz, "ry", "F");
+        rz = env->GetFieldID(clazz, "rz", "F");
+        rw = env->GetFieldID(clazz, "rw", "F");
     }
-    if (mid == 0)
+    if (tx == 0 || ty == 0 || tz == 0 || rx == 0 || ry == 0 || rz == 0 || rw == 0)
     {
-        LOGE("COULD NOT FIND odomReceived METHOD!!!");
-        return false;
+        LOGE("COULD NOT FIND AN ODOM FIELD!!!");
+        return returnval;
     }
-    env->CallObjectMethod(caller, mid, viostatus.translation[0],
-                    viostatus.translation[1],
-                    viostatus.translation[2],
-                    viostatus.rotation[0],
-                    viostatus.rotation[1],
-                    viostatus.rotation[2],
-                    viostatus.rotation[3]);
-    return returnval;
+    env->SetFloatField(caller,tx,viostatus.translation[0]);
+    env->SetFloatField(caller,ty,viostatus.translation[1]);
+    env->SetFloatField(caller,tz,viostatus.translation[2]);
+    env->SetFloatField(caller,rx,viostatus.rotation[0]);
+    env->SetFloatField(caller,ry,viostatus.rotation[1]);
+    env->SetFloatField(caller,rz,viostatus.rotation[2]);
+    env->SetFloatField(caller,rw,viostatus.rotation[3]);
+    return returnval | UPDATED_ODOM;
 }
 
 JNIEXPORT void JNICALL Java_edu_uml_TangoAPI_setbuffer(JNIEnv *env, jobject caller, jobject buf)
@@ -157,9 +172,10 @@ JNIEXPORT void JNICALL Java_edu_uml_TangoAPI_setbuffer(JNIEnv *env, jobject call
     depth_stuff.shorts = (uint16_t*)(*env).GetDirectBufferAddress(buf);
 }
 
-JNIEXPORT jboolean JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject caller)
+JNIEXPORT jint JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject caller)
 {
-    if (application == NULL) return false;
+    int status = UPDATED_NOTHING;
+    if (application == NULL) return UPDATED_NOTHING;
     ApplicationDoStep(application);
 
     //VIO stuff
@@ -168,7 +184,7 @@ JNIEXPORT jboolean JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject cal
     if (CHECK_FAIL(err))
     {
         LOGE("Could not get closest pose");
-        return false;
+        return UPDATED_NOTHING;
     }
 
     //after this point, we invoke the implementation of VIOCallback in java-land immediately before returning
@@ -180,7 +196,7 @@ JNIEXPORT jboolean JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject cal
     if (CHECK_FAIL(err))
     {
         LOGE("Could not get resolution");
-        RETURN_AFTER_PUBLISHING_ODOM(false);
+        RETURN_AFTER_PUBLISHING_ODOM(UPDATED_NOTHING);
     }
     //if it has changed or hasn't been initialized, allocate a buffer of appropriate size
 //    LOGI("HELP! Width: %d Height: %d BPP: %d", width, height, DEPTH_BPP);
@@ -192,7 +208,7 @@ JNIEXPORT jboolean JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject cal
         LOGI("Trying to tell java-land to resize the ByteBuffer to %d",(sizeof(uint16_t)*_depthbufferlength));
         if (env == NULL || caller == NULL)
         {
-            RETURN_AFTER_PUBLISHING_ODOM(false);
+            RETURN_AFTER_PUBLISHING_ODOM(UPDATED_NOTHING);
         }
         static jmethodID mid = 0;
         if (mid == 0)
@@ -203,7 +219,7 @@ JNIEXPORT jboolean JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject cal
         if (mid == 0)
         {
             LOGE("COULD NOT FIND setbufferlength METHOD!!!");
-            RETURN_AFTER_PUBLISHING_ODOM(false);
+            RETURN_AFTER_PUBLISHING_ODOM(UPDATED_NOTHING);
         }
         env->CallObjectMethod(caller, mid, (sizeof(uint16_t)*_depthbufferlength));
     }
@@ -213,7 +229,7 @@ JNIEXPORT jboolean JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject cal
     if (depth_stuff.shorts == NULL)
     {
         LOGE("DEPTH HOLDER IS NULL - GTFO!");
-        RETURN_AFTER_PUBLISHING_ODOM(false);
+        RETURN_AFTER_PUBLISHING_ODOM(UPDATED_NOTHING);
     }
     if (depth_stuff_buffer.ints == NULL)
     {
@@ -224,11 +240,11 @@ JNIEXPORT jboolean JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject cal
     if (CHECK_FAIL(err))
     {
         LOGE("Could not get latest depthframe - error=%d",err);
-        RETURN_AFTER_PUBLISHING_ODOM(false);
+        RETURN_AFTER_PUBLISHING_ODOM(UPDATED_NOTHING);
     }
     //if there's no newer frame, then MISSION ACCOMPLISHED
     if (depthstamp == _depthstamp)
-        RETURN_AFTER_PUBLISHING_ODOM(false);
+        RETURN_AFTER_PUBLISHING_ODOM(UPDATED_NOTHING);
     //otherwise, keep going
     _depthstamp = depthstamp;
 
@@ -252,10 +268,10 @@ JNIEXPORT jboolean JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject cal
         if (CHECK_FAIL(VideoOverlayRenderLatestFrame(application, textureID, _width, _height, &color_timestamp)))
         {
             LOGE("Could not get latest color frame");
-            RETURN_AFTER_PUBLISHING_ODOM(false);
+            RETURN_AFTER_PUBLISHING_ODOM(UPDATED_NOTHING);
         }
     }
 #endif
 
-    RETURN_AFTER_PUBLISHING_ODOM(true);
+    RETURN_AFTER_PUBLISHING_ODOM(UPDATED_DEPTH);
 }
