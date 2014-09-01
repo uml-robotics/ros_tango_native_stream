@@ -82,7 +82,10 @@ public class PositionPublisher implements TangoAPI.VIOReceiver,NodeMain {
             mTFMessage.getTransforms().get(0).getHeader().setFrameId(parentId);
             mTFMessage.getTransforms().get(0).getHeader().setStamp(t);
             mTFMessage.getTransforms().get(0).setChildFrameId(frameId);
-            mTFMessage.getTransforms().get(0).getTransform().setRotation(mOdom.getPose().getPose().getOrientation());
+            mTFMessage.getTransforms().get(0).getTransform().getRotation().setX(mOdom.getPose().getPose().getOrientation().getX());
+            mTFMessage.getTransforms().get(0).getTransform().getRotation().setY(mOdom.getPose().getPose().getOrientation().getY());
+            mTFMessage.getTransforms().get(0).getTransform().getRotation().setZ(mOdom.getPose().getPose().getOrientation().getZ());
+            mTFMessage.getTransforms().get(0).getTransform().getRotation().setW(mOdom.getPose().getPose().getOrientation().getW());
             mTFMessage.getTransforms().get(0).getTransform().getTranslation().setX(z);
             mTFMessage.getTransforms().get(0).getTransform().getTranslation().setY(-x);
             mTFMessage.getTransforms().get(0).getTransform().getTranslation().setZ(y);
