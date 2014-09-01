@@ -90,7 +90,7 @@ public class DepthPublisher extends DepthReceiver implements NodeMain {
         if(depthPublisher != null && mImage != null) {
             mImage.getHeader().setStamp(currentTime);
             try{
-                stream.buffer().resetWriterIndex();
+                stream.buffer().clear();
                 stream.write(buffer.array());
             } catch (IOException ie)
             {
