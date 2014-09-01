@@ -57,6 +57,7 @@ public class DepthPublisher extends DepthReceiver implements NodeMain {
     private Publisher<CameraInfo> cameraInfoPublisher;
     private String topicName,initialTopicName,frameId,initialFrameId;
     private boolean okPublish;
+    private sensor_msgs.CameraInfo mCameraInfo;
 
     //Camera intrinsic parameters borrowed from OLogic's rostango, see NOTICE in project root.
     private final double[] D = {0.2104473, -0.5854902, 0.4575633, 0.0, 0.0};
@@ -84,34 +85,24 @@ public class DepthPublisher extends DepthReceiver implements NodeMain {
     {
         if (!okPublish || connectedNode == null)
             return;
-        final Time currentTime = connectedNode.getCurrentTime();
-        if(depthPublisher != null && buffer !=null) {
-            final Image mImage;
-            try{
-                mImage = connectedNode.getTopicMessageFactory().newFromType(Image._TYPE);
-            }
-            catch(Exception e)
-            {
-                return;
-            }
-            mImage.setStep(width * 2);
-            mImage.setWidth(width);
-            mImage.setHeight(height);
-            mImage.setEncoding("16UC1");
-            mImage.getHeader().setStamp(currentTime);
-            if (frameId != null) {
-                mImage.getHeader().setFrameId(frameId);
-            }
+        Time currentTime = connectedNode.getCurrentTime();
+        if(depthPublisher != null && mImage != null && buffer !=null) {
             final ChannelBufferOutputStream stream = new ChannelBufferOutputStream(ChannelBuffers.buffer(ByteOrder.LITTLE_ENDIAN,width*height*2));
+            mImage.getHeader().setStamp(currentTime);
             try{
                 stream.write(buffer.array());
+                buffer.clear();
+                stream.flush();
                 mImage.setData(stream.buffer());
-            } catch (IOException ie) {
-            } finally {
+            } catch (IOException ie)
+            {
+            }
+            finally{
                 try {
                     stream.close();
-                }catch(IOException ex)
-                {
+                }
+                catch(IOException ie) {
+
                 }
             }
 
@@ -119,28 +110,9 @@ public class DepthPublisher extends DepthReceiver implements NodeMain {
             if (mRateProvider != null)
                 mRateProvider.addStamp(currentTime);
         }
-        if (cameraInfoPublisher != null)
+        if (cameraInfoPublisher != null && mCameraInfo != null)
         {
-            final sensor_msgs.CameraInfo mCameraInfo;
-            try {
-                mCameraInfo = connectedNode.getTopicMessageFactory().newFromType(CameraInfo._TYPE);
-            } catch(Exception e)
-            {
-                return;
-            }
             mCameraInfo.getHeader().setStamp(currentTime);
-            mCameraInfo.setDistortionModel(distortionModel);
-            mCameraInfo.setD(D);
-            mCameraInfo.setK(K);
-            mCameraInfo.setR(R);
-            mCameraInfo.setP(P);
-
-            mCameraInfo.setWidth(width);
-            mCameraInfo.setHeight(height);
-
-            if (frameId != null) {
-                mCameraInfo.getHeader().setFrameId(frameId);
-            }
             cameraInfoPublisher.publish(mCameraInfo);
         }
     }
@@ -157,11 +129,36 @@ public class DepthPublisher extends DepthReceiver implements NodeMain {
             depthPublisher = connectedNode.newPublisher(topicName + "/image_raw", Image._TYPE);
             cameraInfoPublisher = connectedNode.newPublisher(topicName + "/camera_info", CameraInfo._TYPE);
             cameraInfoPublisher.setLatchMode(true);
+
+            mCameraInfo.setDistortionModel(distortionModel);
+            mCameraInfo.setD(D);
+            mCameraInfo.setK(K);
+            mCameraInfo.setR(R);
+            mCameraInfo.setP(P);
+
+            mCameraInfo.setWidth(width);
+            mCameraInfo.setHeight(height);
+
+            if (frameId != null) {
+                mCameraInfo.getHeader().setFrameId(frameId);
+                cameraInfoPublisher.publish(mCameraInfo);
+            }
+
+            mImage.setStep(width * 2);
+            mImage.setWidth(width);
+            mImage.setHeight(height);
+            mImage.setEncoding("16UC1");
         }
     }
 
     public void setFrameId(String frameId) {
         this.frameId = frameId;
+        if (mCameraInfo != null && cameraInfoPublisher != null) {
+            mCameraInfo.getHeader().setFrameId(frameId);
+            cameraInfoPublisher.publish(mCameraInfo);
+        }
+        if (mImage !=null)
+            mImage.getHeader().setFrameId(frameId);
     }
 
     public void setOkPublish(boolean okPublish) {
@@ -176,6 +173,8 @@ public class DepthPublisher extends DepthReceiver implements NodeMain {
     @Override
     public void onStart(ConnectedNode connectedNode) {
         this.connectedNode = connectedNode;
+        mImage = connectedNode.getTopicMessageFactory().newFromType(Image._TYPE);
+        mCameraInfo = connectedNode.getTopicMessageFactory().newFromType(CameraInfo._TYPE);
         setTopicName(initialTopicName);
         setFrameId(initialFrameId);
     }

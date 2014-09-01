@@ -50,8 +50,12 @@ public class PositionPublisher extends VIOReceiver implements NodeMain {
     private Publisher<Odometry> odometryPublisher;
     private Publisher<PoseStamped> poseStampedPublisher;
 
+    private TFMessage mTFMessage;
     private String frameId, parentId;
     private boolean okPublish;
+
+    private Odometry mOdom;
+    private PoseStamped mPoseStamped;
     private Boolean sendGoal = false;
 
     private RateWatcher.RateProvider mRateProvider;
@@ -62,14 +66,8 @@ public class PositionPublisher extends VIOReceiver implements NodeMain {
     }
 
     public void VIOCallback(float x, float y, float z, float ox, float oy, float oz, float ow) {
-        if(tfMessagePublisher != null && odometryPublisher != null && okPublish) {
-            final Time t = connectedNode.getCurrentTime();
-            final Odometry mOdom;
-            try{
-                mOdom = connectedNode.getTopicMessageFactory().newFromType(Odometry._TYPE);
-            } catch (Exception ex) {
-                return;
-            }
+        if(tfMessagePublisher != null && odometryPublisher != null && mOdom != null && okPublish) {
+            Time t = connectedNode.getCurrentTime();
             mOdom.getHeader().setFrameId(parentId);
             mOdom.getHeader().setStamp(t);
             mOdom.getHeader().setSeq(mOdom.getHeader().getSeq() + 1);
@@ -80,15 +78,7 @@ public class PositionPublisher extends VIOReceiver implements NodeMain {
             mOdom.getPose().getPose().getPosition().setX(z);
             mOdom.getPose().getPose().getPosition().setY(-x);
             mOdom.getPose().getPose().getPosition().setZ(y);
-            odometryPublisher.publish(mOdom);
 
-            final TFMessage mTFMessage;
-            try {
-                mTFMessage = connectedNode.getTopicMessageFactory().newFromType(TFMessage._TYPE);
-                mTFMessage.getTransforms().add((TransformStamped) connectedNode.getTopicMessageFactory().newFromType(TransformStamped._TYPE));
-            } catch (Exception ex) {
-                return;
-            }
             mTFMessage.getTransforms().get(0).getHeader().setFrameId(parentId);
             mTFMessage.getTransforms().get(0).getHeader().setStamp(t);
             mTFMessage.getTransforms().get(0).setChildFrameId(frameId);
@@ -101,16 +91,11 @@ public class PositionPublisher extends VIOReceiver implements NodeMain {
             mTFMessage.getTransforms().get(0).getTransform().getTranslation().setZ(y);
 
             tfMessagePublisher.publish(mTFMessage);
+            odometryPublisher.publish(mOdom);
             if (mRateProvider != null)
                 mRateProvider.addStamp(t);
             if(sendGoal) {
                 sendGoal = false;
-                final PoseStamped mPoseStamped;
-                try {
-                    mPoseStamped = connectedNode.getTopicMessageFactory().newFromType(PoseStamped._TYPE);
-                } catch (Exception ex) {
-                    return;
-                }
                 mPoseStamped.getPose().setPosition(mOdom.getPose().getPose().getPosition());
                 mPoseStamped.getPose().getPosition().setZ(0);
                 mPoseStamped.getPose().setOrientation(mOdom.getPose().getPose().getOrientation());
@@ -145,6 +130,20 @@ public class PositionPublisher extends VIOReceiver implements NodeMain {
         tfMessagePublisher = connectedNode.newPublisher("/tf", TFMessage._TYPE);
         odometryPublisher = connectedNode.newPublisher("/odom", Odometry._TYPE);
         poseStampedPublisher = connectedNode.newPublisher("/move_base_simple/goal",PoseStamped._TYPE);
+
+        while (mTFMessage == null || mTFMessage.getTransforms().size() == 0 || mOdom == null || mPoseStamped == null)
+            try {
+                if (mTFMessage == null)
+                    mTFMessage = connectedNode.getTopicMessageFactory().newFromType(TFMessage._TYPE);
+                if (mTFMessage != null && mTFMessage.getTransforms().size() == 0)
+                    mTFMessage.getTransforms().add((TransformStamped) connectedNode.getTopicMessageFactory().newFromType(TransformStamped._TYPE));
+                if (mOdom == null)
+                    mOdom = connectedNode.getTopicMessageFactory().newFromType(Odometry._TYPE);
+                if(mPoseStamped == null)
+                    mPoseStamped = connectedNode.getTopicMessageFactory().newFromType(PoseStamped._TYPE);
+            } catch (Exception ex) {
+                Log.e("PositionPublisher", "Exception while initializing", ex);
+            }
     }
 
     @Override
