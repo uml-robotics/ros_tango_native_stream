@@ -30,10 +30,13 @@
 
 package edu.uml.tango.tango_root.peanut_stream;
 
+import android.content.res.Resources;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.text.format.Formatter;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -42,6 +45,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.ToggleButton;
 import org.ros.address.InetAddressFactory;
 import org.ros.node.NodeConfiguration;
@@ -51,7 +55,7 @@ import android.util.Log;
 
 import edu.uml.TangoAPI;
 
-public class PeanutStream extends RosFragmentActivity {
+public class PeanutStream extends RosFragmentActivity implements RateWatcher.RateUpdater{
     private PositionPublisher posePub;
     private DepthPublisher depthPub;
     private static final String TAG = "TangoJNIActivity";
@@ -59,6 +63,8 @@ public class PeanutStream extends RosFragmentActivity {
         super("peanut_stream", "peanut_stream");
     }
 
+    RateWatcher mRateWatcher = new RateWatcher(this);
+    private Handler mHandler = new Handler();
     TangoAPI mTangoAPI;
 
     // generic specific textbox event handling
@@ -93,27 +99,18 @@ public class PeanutStream extends RosFragmentActivity {
         setContentView(R.layout.main);
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-   //     SharedPreferences.Editor editor = preferences.edit();
-  //      editor.putString("Name","Harneet");
- //       editor.apply();
-
-        //SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-       // String name = preferences.getString("Name","");
-       // if(!name.equalsIgnoreCase(""))
-        //{
-       //     name = name+"  Sethi";  /* Edit the value here*/
-       // }
-
 
         if(posePub == null) {
             posePub = new PositionPublisher();
             posePub.setParentId(sharedPreferences.getString("e1_text",getResources().getString(R.string.parent_id)));
             posePub.setFrameId(sharedPreferences.getString("e2_text",getResources().getString(R.string.odom_frame_id)));
             posePub.setOkPublish(sharedPreferences.getBoolean("tb1_checked",false));
+            posePub.setRateWatcher(mRateWatcher.add(R.id.odom_rate));
         }
         if(depthPub == null) {
             depthPub = new DepthPublisher(sharedPreferences.getString("e3_text",getResources().getString(R.string.depth_topic)),
                     sharedPreferences.getString("e4_text",getResources().getString(R.string.depth_frame_id)));
+            depthPub.setRateWatcher(mRateWatcher.add(R.id.depth_rate));
             depthPub.setOkPublish(sharedPreferences.getBoolean("tb2_checked",false));
         }
         mTangoAPI = new TangoAPI(posePub, depthPub);
@@ -157,8 +154,8 @@ public class PeanutStream extends RosFragmentActivity {
                 savePreferences("tb2_checked",isChecked);
             }
         });
-        tb1.setChecked(sharedPreferences.getBoolean("tb1_checked",false));
-        tb2.setChecked(sharedPreferences.getBoolean("tb2_checked",false));
+        tb1.setChecked(sharedPreferences.getBoolean("tb1_checked",true));
+        tb2.setChecked(sharedPreferences.getBoolean("tb2_checked",true));
 
         Button b = (Button) findViewById(R.id.gotoButton);
         b.setOnClickListener(new View.OnClickListener() {
@@ -206,4 +203,16 @@ public class PeanutStream extends RosFragmentActivity {
         editor.commit();
     }
 
+    @Override
+    public void update(final int id) {
+        final TextView tv = (TextView)findViewById(id);
+        final Resources res = getResources();
+        mHandler.post(new Runnable() {
+            @Override
+            public void run()
+            {
+                tv.setText(String.format("%.3f %s",mRateWatcher.getRate(id),res.getString(R.string.frequency_suffix)));
+            }
+        });
+    }
 }

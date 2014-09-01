@@ -75,6 +75,12 @@ public class DepthPublisher extends DepthReceiver implements NodeMain {
         this.initialFrameId=frameId;
     }
 
+    private RateWatcher.RateProvider mRateProvider;
+    public void setRateWatcher(RateWatcher.RateProvider rw)
+    {
+        mRateProvider = rw;
+    }
+
     Image mImage;
     public void DepthCallback()
     {
@@ -84,7 +90,7 @@ public class DepthPublisher extends DepthReceiver implements NodeMain {
         if(depthPublisher != null && mImage != null && buffer !=null) {
             mImage.getHeader().setStamp(currentTime);
             try{
-                stream.buffer().resetWriterIndex();
+                stream.buffer().clear();
                 stream.write(buffer.array());
             } catch (IOException ie)
             {
@@ -92,6 +98,8 @@ public class DepthPublisher extends DepthReceiver implements NodeMain {
             mImage.setData(stream.buffer());
 
             depthPublisher.publish(mImage);
+            if (mRateProvider != null)
+                mRateProvider.addStamp(currentTime);
         }
         if (cameraInfoPublisher != null && mCameraInfo != null)
         {

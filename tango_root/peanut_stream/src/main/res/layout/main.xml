@@ -140,6 +140,7 @@
                 android:layout_below="@+id/depthTextView"
                 android:layout_alignParentStart="true" />
         </RelativeLayout>
+
         <RelativeLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content">
@@ -150,7 +151,60 @@
                 android:id="@+id/gotoButton"
                 ></Button>
 
-            </RelativeLayout>
+        </RelativeLayout>
 
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center_horizontal|bottom">
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal|bottom">
+
+                <RelativeLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:layout_centerHorizontal="true">
+                        <TextView android:id="@+id/odom_title"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@+string/odom_frequency_title"
+                            android:textSize="24dp"
+                            android:layout_alignParentLeft="true"/>
+                        <TextView android:id="@+id/odom_rate"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@+string/frequency_suffix"
+                            android:textSize="24dp"
+                            android:layout_marginLeft="19dp"
+                            android:layout_toRightOf="@+id/odom_title" />
+                    </RelativeLayout>
+
+                <RelativeLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:layout_centerHorizontal="true">
+                    <TextView android:id="@+id/depth_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@+string/depth_frequency_title"
+                        android:textSize="24dp"
+                        android:layout_alignParentLeft="true" />
+                    <TextView android:id="@+id/depth_rate"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@+string/frequency_suffix"
+                        android:textSize="24dp"
+                        android:layout_marginLeft="20dp"
+                        android:layout_toRightOf="@+id/depth_title" />
+                </RelativeLayout>
+            </LinearLayout>
+        </FrameLayout>
     </LinearLayout>
+
 </RelativeLayout>

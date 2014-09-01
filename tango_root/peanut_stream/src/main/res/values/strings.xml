@@ -7,5 +7,8 @@
     <string name="depth_topic">/tango/depth</string>
     <string name="button_name">Come to me</string>
     <string name="goal_topic">/move_base_simple/goal</string>
+    <string name="frequency_suffix">Hz</string>
+    <string name="odom_frequency_title">Odom Update Rate</string>
+    <string name="depth_frequency_title">Depth Update Rate</string>
 
 </resources>
