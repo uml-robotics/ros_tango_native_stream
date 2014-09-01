@@ -56,7 +56,7 @@ public class DepthPublisher extends DepthReceiver implements NodeMain {
     private Publisher<Image> depthPublisher;
     private Publisher<CameraInfo> cameraInfoPublisher;
     private String topicName,initialTopicName,frameId,initialFrameId;
-    private boolean okPublish = true;
+    private boolean okPublish;
     private sensor_msgs.CameraInfo mCameraInfo;
 
     //Camera intrinsic parameters borrowed from OLogic's rostango, see NOTICE in project root.
@@ -87,7 +87,7 @@ public class DepthPublisher extends DepthReceiver implements NodeMain {
         if (!okPublish || connectedNode == null)
             return;
         Time currentTime = connectedNode.getCurrentTime();
-        if(depthPublisher != null && mImage != null) {
+        if(depthPublisher != null && mImage != null && buffer !=null) {
             mImage.getHeader().setStamp(currentTime);
             try{
                 stream.buffer().clear();

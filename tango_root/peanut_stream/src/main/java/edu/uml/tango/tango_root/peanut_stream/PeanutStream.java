@@ -31,14 +31,18 @@
 package edu.uml.tango.tango_root.peanut_stream;
 
 import android.content.res.Resources;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.text.format.Formatter;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -69,15 +73,19 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
         switch (v.getId()) {
             case R.id.positionEditText:
                 posePub.setParentId(str);
+                savePreferences("e1_text",str);
                 break;
             case R.id.positionFrameEditText:
                 posePub.setFrameId(str);
+                savePreferences("e2_text",str);
                 break;
             case R.id.depthEditText:
                 depthPub.setTopicName(str);
+                savePreferences("e3_text",str);
                 break;
             case R.id.depthFrameEditText:
                 depthPub.setFrameId(str);
+                savePreferences("e4_text",str);
                 break;
         }
     }
@@ -90,15 +98,31 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.main);
 
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+   //     SharedPreferences.Editor editor = preferences.edit();
+  //      editor.putString("Name","Harneet");
+ //       editor.apply();
+
+        //SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+       // String name = preferences.getString("Name","");
+       // if(!name.equalsIgnoreCase(""))
+        //{
+       //     name = name+"  Sethi";  /* Edit the value here*/
+       // }
+
+
         if(posePub == null) {
             posePub = new PositionPublisher();
-            posePub.setParentId(getResources().getString(R.string.parent_id));
-            posePub.setFrameId(getResources().getString(R.string.odom_frame_id));
+            posePub.setParentId(sharedPreferences.getString("e1_text",getResources().getString(R.string.parent_id)));
+            posePub.setFrameId(sharedPreferences.getString("e2_text",getResources().getString(R.string.odom_frame_id)));
+            posePub.setOkPublish(sharedPreferences.getBoolean("tb1_checked",false));
             posePub.setRateWatcher(mRateWatcher.add(R.id.odom_rate));
         }
         if(depthPub == null) {
-            depthPub = new DepthPublisher(getResources().getString(R.string.depth_topic),getResources().getString(R.string.depth_frame_id));
+            depthPub = new DepthPublisher(sharedPreferences.getString("e3_text",getResources().getString(R.string.depth_topic)),
+                    sharedPreferences.getString("e4_text",getResources().getString(R.string.depth_frame_id)));
             depthPub.setRateWatcher(mRateWatcher.add(R.id.depth_rate));
+            depthPub.setOkPublish(sharedPreferences.getBoolean("tb2_checked",false));
         }
         mTangoAPI = new TangoAPI(posePub, depthPub);
         mTangoAPI.start();
@@ -107,6 +131,10 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
         EditText e2 = (EditText) findViewById(R.id.positionFrameEditText);
         EditText e3 = (EditText) findViewById(R.id.depthEditText);
         EditText e4 = (EditText) findViewById(R.id.depthFrameEditText);
+        e1.setText(sharedPreferences.getString("e1_text", getResources().getString(R.string.parent_id)));
+        e2.setText(sharedPreferences.getString("e2_text", getResources().getString(R.string.odom_frame_id)));
+        e3.setText(sharedPreferences.getString("e3_text", getResources().getString(R.string.depth_topic)));
+        e4.setText(sharedPreferences.getString("e4_text", getResources().getString(R.string.depth_frame_id)));
         final EditText[] ets = new EditText[]{e1,e2,e3,e4};
 
         for(EditText et : ets) {
@@ -126,6 +154,7 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 posePub.setOkPublish(isChecked);
+                savePreferences("tb1_checked",isChecked);
             }
         });
 
@@ -133,10 +162,19 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 depthPub.setOkPublish(isChecked);
+                savePreferences("tb2_checked",isChecked);
             }
         });
-        tb1.setChecked(true);
-        tb2.setChecked(true);
+        tb1.setChecked(sharedPreferences.getBoolean("tb1_checked",false));
+        tb2.setChecked(sharedPreferences.getBoolean("tb2_checked",false));
+
+        Button b = (Button) findViewById(R.id.gotoButton);
+        b.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                posePub.publishCurrent();
+            }
+        });
     }
 
     @Override
@@ -158,6 +196,22 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         return true;
+    }
+
+    private void savePreferences(String key, boolean value) {
+        SharedPreferences sharedPreferences = PreferenceManager
+                .getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean(key, value);
+        editor.commit();
+    }
+
+    private void savePreferences(String key, String value) {
+        SharedPreferences sharedPreferences = PreferenceManager
+                .getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(key, value);
+        editor.commit();
     }
 
     @Override
