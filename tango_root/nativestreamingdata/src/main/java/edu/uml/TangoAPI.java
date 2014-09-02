@@ -78,11 +78,11 @@ public class TangoAPI extends Thread {
         if (depthReceiver != null) {
             if (depthReceiver.buffer != null) {
                 depthReceiver.buffer.clear();
+                freeNativeBuffer(depthReceiver.buffer);
                 depthReceiver.buffer = null;
             }
-            depthReceiver.buffer = ByteBuffer.allocateDirect(length);
+            depthReceiver.buffer = (ByteBuffer)allocNativeBuffer(length);
             depthReceiver.buffer.order(ByteOrder.LITTLE_ENDIAN);
-            setbuffer(depthReceiver.buffer);
         }
     }
 
@@ -91,6 +91,7 @@ public class TangoAPI extends Thread {
         mBreakout = true;
         try {
             join();
+            freeNativeBuffer(depthReceiver.buffer);
         }
         catch(InterruptedException ie)
         {
@@ -131,7 +132,8 @@ public class TangoAPI extends Thread {
         Log.e(TAG, "Broke out");
     }
 
-    public native void setbuffer(ByteBuffer b);
+    public native Object allocNativeBuffer(int size);
+    public native void freeNativeBuffer(Object buffer);
 
     public native int dowork();
 

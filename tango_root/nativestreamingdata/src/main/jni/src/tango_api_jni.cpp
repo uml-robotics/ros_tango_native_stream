@@ -167,9 +167,16 @@ jint sendOdom(JNIEnv *env, jobject caller, VIOStatus viostatus, jint returnval)
     return returnval | UPDATED_ODOM;
 }
 
-JNIEXPORT void JNICALL Java_edu_uml_TangoAPI_setbuffer(JNIEnv *env, jobject caller, jobject buf)
+JNIEXPORT jobject JNICALL Java_edu_uml_TangoAPI_allocNativeBuffer(JNIEnv *env, jobject caller, jint length)
 {
-    depth_stuff.shorts = (uint16_t*)(*env).GetDirectBufferAddress(buf);
+    depth_stuff.shorts = (uint16_t*)malloc(length);
+    jobject directBuffer = env->NewDirectByteBuffer(depth_stuff.shorts, length);
+    return env->NewGlobalRef(directBuffer);
+}
+JNIEXPORT void JNICALL Java_edu_uml_TangoAPI_freeNativeBuffer(JNIEnv *env, jobject caller, jobject ref)
+{
+    env->DeleteGlobalRef(ref);
+    free(depth_stuff.shorts);
 }
 
 JNIEXPORT jint JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject caller)
