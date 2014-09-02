@@ -67,7 +67,7 @@ JNIEXPORT jboolean JNICALL Java_edu_uml_TangoAPI_init(JNIEnv *env)
             if (!CHECK_FAIL(err))
             {
 #endif
-                if (!CHECK_FAIL(VIOInitialize(application, false, NULL)))
+                if (!CHECK_FAIL(VIOInitialize(application, true, NULL)))
                 {
                     LOGI("INITIALIZED");
                     return (jboolean)true;
