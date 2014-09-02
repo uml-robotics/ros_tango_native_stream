@@ -30,6 +30,7 @@
 package edu.uml;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import android.util.Log;
 
@@ -80,6 +81,7 @@ public class TangoAPI extends Thread {
                 depthReceiver.buffer = null;
             }
             depthReceiver.buffer = ByteBuffer.allocateDirect(length);
+            depthReceiver.buffer.order(ByteOrder.LITTLE_ENDIAN);
             setbuffer(depthReceiver.buffer);
         }
     }

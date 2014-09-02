@@ -65,8 +65,8 @@ public class DepthPublisher extends DepthReceiver implements NodeMain {
     private final double[] R = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     private final double[] P = {237.0, 0.0, 160.0, 0.0, 0.0, 237.0, 90.0, 0.0, 0.0, 0.0, 1.0, 0.0};
     private final String distortionModel = "plumb_bob";
+    ChannelBuffer cb = null;
     final int width = 320, height=180;
-
     public DepthPublisher(String topicName, String frameId)
     {
         super();
@@ -87,23 +87,10 @@ public class DepthPublisher extends DepthReceiver implements NodeMain {
             return;
         Time currentTime = connectedNode.getCurrentTime();
         if(depthPublisher != null && mImage != null && buffer !=null) {
-            final ChannelBufferOutputStream stream = new ChannelBufferOutputStream(ChannelBuffers.buffer(ByteOrder.LITTLE_ENDIAN,width*height*2));
             mImage.getHeader().setStamp(currentTime);
-            try{
-                stream.write(buffer.array());
-                buffer.clear();
-                stream.flush();
-                mImage.setData(stream.buffer());
-            } catch (IOException ie)
-            {
-            }
-            finally{
-                try {
-                    stream.close();
-                }
-                catch(IOException ie) {
-
-                }
+            if (cb == null) {
+                cb = ChannelBuffers.wrappedBuffer(buffer);
+                mImage.setData(cb);
             }
 
             depthPublisher.publish(mImage);

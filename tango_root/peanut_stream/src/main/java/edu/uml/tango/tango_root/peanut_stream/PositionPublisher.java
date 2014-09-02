@@ -79,16 +79,18 @@ public class PositionPublisher extends VIOReceiver implements NodeMain {
             mOdom.getPose().getPose().getPosition().setY(-x);
             mOdom.getPose().getPose().getPosition().setZ(y);
 
-            mTFMessage.getTransforms().get(0).getHeader().setFrameId(parentId);
-            mTFMessage.getTransforms().get(0).getHeader().setStamp(t);
-            mTFMessage.getTransforms().get(0).setChildFrameId(frameId);
-            mTFMessage.getTransforms().get(0).getTransform().getRotation().setX(mOdom.getPose().getPose().getOrientation().getX());
-            mTFMessage.getTransforms().get(0).getTransform().getRotation().setY(mOdom.getPose().getPose().getOrientation().getY());
-            mTFMessage.getTransforms().get(0).getTransform().getRotation().setZ(mOdom.getPose().getPose().getOrientation().getZ());
-            mTFMessage.getTransforms().get(0).getTransform().getRotation().setW(mOdom.getPose().getPose().getOrientation().getW());
-            mTFMessage.getTransforms().get(0).getTransform().getTranslation().setX(z);
-            mTFMessage.getTransforms().get(0).getTransform().getTranslation().setY(-x);
-            mTFMessage.getTransforms().get(0).getTransform().getTranslation().setZ(y);
+            final geometry_msgs.TransformStamped tr = mTFMessage.getTransforms().get(0);
+            tr.getHeader().setFrameId(parentId);
+            tr.getHeader().setStamp(t);
+            tr.setChildFrameId(frameId);
+            tr.getTransform().getRotation().setX(mOdom.getPose().getPose().getOrientation().getX());
+            tr.getTransform().getRotation().setY(mOdom.getPose().getPose().getOrientation().getY());
+            tr.getTransform().getRotation().setZ(mOdom.getPose().getPose().getOrientation().getZ());
+            tr.getTransform().getRotation().setW(mOdom.getPose().getPose().getOrientation().getW());
+            tr.getTransform().getTranslation().setX(z);
+            tr.getTransform().getTranslation().setY(-x);
+            tr.getTransform().getTranslation().setZ(y);
+            mTFMessage.getTransforms().set(0,tr);
 
             tfMessagePublisher.publish(mTFMessage);
             odometryPublisher.publish(mOdom);
