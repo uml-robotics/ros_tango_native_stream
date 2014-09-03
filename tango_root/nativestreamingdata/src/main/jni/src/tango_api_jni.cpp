@@ -31,6 +31,7 @@
 application_handle_t *application;
 video_overlay_handle_t *overlay;
 vio_handle_t *vio;
+jobject globalRef;
 
 int _depthwidth, _depthheight;
 union DEPTH_STUFF_ {
@@ -171,11 +172,12 @@ JNIEXPORT jobject JNICALL Java_edu_uml_TangoAPI_allocNativeBuffer(JNIEnv *env, j
 {
     depth_stuff.shorts = (uint16_t*)malloc(length);
     jobject directBuffer = env->NewDirectByteBuffer(depth_stuff.shorts, length);
-    return env->NewGlobalRef(directBuffer);
+    globalRef = env->NewGlobalRef(directBuffer);
+    return globalRef;
 }
-JNIEXPORT void JNICALL Java_edu_uml_TangoAPI_freeNativeBuffer(JNIEnv *env, jobject caller, jobject ref)
+JNIEXPORT void JNICALL Java_edu_uml_TangoAPI_freeNativeBuffer(JNIEnv *env, jobject caller)
 {
-    env->DeleteGlobalRef(ref);
+    env->DeleteGlobalRef(globalRef);
     free(depth_stuff.shorts);
 }
 
