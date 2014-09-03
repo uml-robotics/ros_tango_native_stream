@@ -94,13 +94,13 @@ public class DepthPublisher extends DepthReceiver implements NodeMain {
             }
 
             depthPublisher.publish(mImage);
+            if (cameraInfoPublisher != null && mCameraInfo != null)
+            {
+                mCameraInfo.getHeader().setStamp(currentTime);
+                cameraInfoPublisher.publish(mCameraInfo);
+            }
             if (mRateProvider != null)
-                mRateProvider.addStamp(currentTime);
-        }
-        if (cameraInfoPublisher != null && mCameraInfo != null)
-        {
-            mCameraInfo.getHeader().setStamp(currentTime);
-            cameraInfoPublisher.publish(mCameraInfo);
+                mRateProvider.addStamp(currentTime.secs,currentTime.nsecs);
         }
     }
 
@@ -112,10 +112,8 @@ public class DepthPublisher extends DepthReceiver implements NodeMain {
             return;
         this.topicName = topicName;
         if (depthPublisher == null || depthPublisher.getTopicName().toString() != topicName + "/image_raw") {
-            topicName = topicName.replace("\n", "");
             depthPublisher = connectedNode.newPublisher(topicName + "/image_raw", Image._TYPE);
             cameraInfoPublisher = connectedNode.newPublisher(topicName + "/camera_info", CameraInfo._TYPE);
-            cameraInfoPublisher.setLatchMode(true);
 
             mCameraInfo.setDistortionModel(distortionModel);
             mCameraInfo.setD(D);
@@ -128,7 +126,6 @@ public class DepthPublisher extends DepthReceiver implements NodeMain {
 
             if (frameId != null) {
                 mCameraInfo.getHeader().setFrameId(frameId);
-                cameraInfoPublisher.publish(mCameraInfo);
             }
 
             mImage.setStep(width * 2);

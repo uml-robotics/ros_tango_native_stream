@@ -54,8 +54,8 @@ public class RateWatcher {
         final RateHandle r = new RateHandle(i);
         RateProvider rp = new RateProvider() {
             @Override
-            public void addStamp(Time t) {
-                r.add(t);
+            public void addStamp(int s, int ns) {
+                r.add(s,ns);
             }
         };
         awareMap.put(i,r);
@@ -69,24 +69,25 @@ public class RateWatcher {
 
     public class RateHandle {
         private static final int WINDOW_LENGTH = 10;
-        private ArrayList<Duration> durations = new ArrayList<Duration>();
-        private Time mLastTime;
+        private ArrayList<Double> durations = new ArrayList<Double>();
+        private int lasts,lastns;
         int mId;
         public RateHandle(int id)
         {
             mId = id;
         }
-        public void add(Time t)
+        public void add(int s, int ns)
         {
             synchronized(this) {
-                if (mLastTime != null) {
-                    durations.add(t.subtract(mLastTime));
+                if (lasts != 0) {
+                    durations.add((double)(s-lasts) + ((ns-lastns)*SEC_PER_NSEC));
                 }
                 while (durations.size() > WINDOW_LENGTH)
                 {
                     durations.remove(0);
                 }
-                mLastTime = t;
+                lasts = s;
+                lastns = ns;
             }
             mUpdater.update(mId);
         }
@@ -97,9 +98,9 @@ public class RateWatcher {
             double secs = 0;
             int count = 0;
             synchronized(this) {
-                for (Duration d : durations)
+                for (double d : durations)
                 {
-                    secs += (double)d.secs + ((double)d.nsecs*SEC_PER_NSEC);
+                    secs += d;
                 }
                 count = durations.size();
             }
@@ -110,7 +111,7 @@ public class RateWatcher {
 
     public interface RateProvider
     {
-        public void addStamp(org.ros.message.Time t);
+        public void addStamp(int s, int ns);
     }
 
     public interface RateUpdater
