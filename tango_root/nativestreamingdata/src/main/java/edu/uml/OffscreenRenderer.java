@@ -29,36 +29,38 @@
 */
 package edu.uml;
 
+import android.app.Activity;
 import android.content.Context;
 import android.opengl.GLSurfaceView;
+import android.os.Bundle;
 import android.util.Log;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-/**
- * Created by csrobot on 9/4/14.
- */
-public class OffscreenRenderer extends Thread {
+public class OffscreenRenderer extends GLSurfaceView {
     private static final String TAG = "OffscreenRenderer";
-    @Override
-    public void start() {
-        Log.e(TAG, "STARTING");
-        State currState = getState();
-        Log.e(TAG, "CURRENT THREAD STATE = " + currState.toString());
-        if ((currState == State.RUNNABLE || currState == State.NEW || currState == State.TERMINATED))
-            super.start();
-    }
-    public static Context context;
 
-    @Override
-    public void run() {
-        surface = new MyGLSurfaceView(context);
+    public OffscreenRenderer(Context context) {
+        super(context);
+        setRenderer(new Renderer());
     }
 
-    public static native void offScreenRenderer();
+    private class Renderer implements GLSurfaceView.Renderer {
+        public void onDrawFrame(GL10 gl) {
+            Log.i(TAG, "DRAW");
+            dowork();
+        }
+
+        public void onSurfaceChanged(GL10 gl, int width, int height) {
+            //init(width, height);
+            Log.i(TAG, "CHANGED");
+        }
+
+        public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+            Log.i(TAG, "CREATED");
+        }
+    }
 
     public static native void dowork();
-
-    MyGLSurfaceView surface;
 }

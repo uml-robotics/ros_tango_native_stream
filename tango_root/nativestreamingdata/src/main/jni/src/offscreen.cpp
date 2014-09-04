@@ -17,13 +17,13 @@ void renderScrape(void *destination, uint32_t w, uint32_t h)
     double color_timestamp;
 
     glBindFramebuffer(GL_FRAMEBUFFER, fb);
-    glFramebufferTexture1D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                             GL_TEXTURE_2D, textureID, 0);
 
     VideoOverlayRenderLatestFrame(application, textureID, w, h, &color_timestamp);
 
     glViewport(0, 0, w, h);
-    scrape(destination);
+    scrapeTexture(destination);
 }
 
 void initOffscreen(uint32_t w, uint32_t h, void **storage)
@@ -37,17 +37,20 @@ void initOffscreen(uint32_t w, uint32_t h, void **storage)
 //this should never return
 JNIEXPORT void JNICALL Java_edu_uml_OffscreenRenderer_dowork(JNIEnv *env, jobject caller)
 {
-   static double laststamp;
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-   double color_timestamp;
-   if (tango_ready && application != NULL)
+   while(true)
    {
-       static void *storage;
-       initOffscreen(CLR_W, CLR_H, &storage);
-       renderScrape(storage, CLR_W, CLR_H);
-       if (laststamp != color_timestamp)
+       static double laststamp;
+       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+       double color_timestamp;
+       if (tango_ready && application != NULL)
        {
-            LOGI("HOLY SHIT");
+           static void *storage;
+           initOffscreen(CLR_W, CLR_H, &storage);
+           renderScrape(storage, CLR_W, CLR_H);
+           if (laststamp != color_timestamp)
+           {
+                LOGI("HOLY cow?");
+           }
        }
    }
 }

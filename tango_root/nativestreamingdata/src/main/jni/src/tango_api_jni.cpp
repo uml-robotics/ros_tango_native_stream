@@ -204,6 +204,7 @@ JNIEXPORT jint JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject caller)
         LOGE("Could not get resolution");
         RETURN_AFTER_PUBLISHING_ODOM(UPDATED_NOTHING);
     }
+    tango_ready = true;
     //if it has changed or hasn't been initialized, allocate a buffer of appropriate size
 //    LOGI("HELP! Width: %d Height: %d BPP: %d", width, height, DEPTH_BPP);
     if (_depthwidth != dims[0] || _depthheight != dims[1])

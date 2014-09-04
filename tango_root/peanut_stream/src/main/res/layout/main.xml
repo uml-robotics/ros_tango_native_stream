@@ -29,14 +29,11 @@
 * Author: Jordan Allspaw <jallspaw@cs.uml.edu>
 -->
     <RelativeLayout
+    xmlns:tools="http://schemas.android.com/tools"
     xmlns:android="http://schemas.android.com/apk/res/android"
      android:layout_height="fill_parent"
-    android:layout_width="fill_parent">
-    <HorizontalScrollView
-
-    android:layout_height="fill_parent"
     android:layout_width="fill_parent"
-    ></HorizontalScrollView>
+    tools:context=".PeanutStream">
 
     <LinearLayout
         android:layout_width="fill_parent"
@@ -45,59 +42,59 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true">
 
-    <RelativeLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="TF Parent Frame Id"
-            android:textSize="24dp"
-            android:id="@+id/positionTextView"
-            android:layout_alignParentTop="true"
-            android:layout_toEndOf="@+id/positionToggleButton" />
+        <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TF Parent Frame Id"
+                android:textSize="24dp"
+                android:id="@+id/positionTextView"
+                android:layout_alignParentTop="true"
+                android:layout_toEndOf="@+id/positionToggleButton" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="TF Child Frame Id"
-            android:textSize="24dp"
-            android:id="@+id/positionChildTextView"
-            android:layout_alignTop="@+id/positionFrameEditText"
-            android:layout_toEndOf="@+id/positionToggleButton" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TF Child Frame Id"
+                android:textSize="24dp"
+                android:id="@+id/positionChildTextView"
+                android:layout_alignTop="@+id/positionFrameEditText"
+                android:layout_toEndOf="@+id/positionToggleButton" />
 
-        <EditText
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/parent_id"
-            android:textSize="24dp"
-            android:id="@+id/positionEditText"
-            android:layout_toEndOf="@+id/positionTextView"
-            android:layout_alignParentTop="true"
-            android:singleLine="true" />
+            <EditText
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/parent_id"
+                android:textSize="24dp"
+                android:id="@+id/positionEditText"
+                android:layout_toEndOf="@+id/positionTextView"
+                android:layout_alignParentTop="true"
+                android:singleLine="true" />
 
-        <EditText
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/odom_frame_id"
-            android:textSize="24dp"
-            android:id="@+id/positionFrameEditText"
-            android:layout_toEndOf="@id/positionTextView"
-            android:layout_below="@+id/positionEditText"
-            android:layout_alignParentEnd="true"
-            android:singleLine="true" />
+            <EditText
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/odom_frame_id"
+                android:textSize="24dp"
+                android:id="@+id/positionFrameEditText"
+                android:layout_toEndOf="@id/positionTextView"
+                android:layout_below="@+id/positionEditText"
+                android:layout_alignParentEnd="true"
+                android:singleLine="true" />
 
-        <ToggleButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textOn="Publish"
-            android:textOff="Publish"
-            android:enabled="true"
-            android:id="@+id/positionToggleButton"
-            android:layout_below="@+id/positionTextView"
-            android:layout_alignParentStart="true" />
+            <ToggleButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textOn="Publish"
+                android:textOff="Publish"
+                android:enabled="true"
+                android:id="@+id/positionToggleButton"
+                android:layout_below="@+id/positionTextView"
+                android:layout_alignParentStart="true" />
 
-    </RelativeLayout>
+        </RelativeLayout>
 
         <RelativeLayout
             android:layout_width="fill_parent"
