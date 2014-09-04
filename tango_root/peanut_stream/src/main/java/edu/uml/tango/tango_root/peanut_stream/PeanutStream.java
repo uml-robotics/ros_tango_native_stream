@@ -33,12 +33,13 @@ package edu.uml.tango.tango_root.peanut_stream;
 import android.content.res.Resources;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.opengl.GLES20;
+import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.text.format.Formatter;
-import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -50,8 +51,11 @@ import android.widget.ToggleButton;
 import org.ros.address.InetAddressFactory;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
-import java.nio.ByteBuffer;
+
 import android.util.Log;
+
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
 
 import edu.uml.TangoAPI;
 
@@ -114,7 +118,8 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
             depthPub.setOkPublish(sharedPreferences.getBoolean("tb2_checked",false));
         }
         mTangoAPI = new TangoAPI(posePub, depthPub);
-        mTangoAPI.start();
+        //depthPub.start(mTangoAPI);
+
 
         EditText e1 = (EditText) findViewById(R.id.positionEditText);
         EditText e2 = (EditText) findViewById(R.id.positionFrameEditText);
@@ -164,14 +169,18 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
                 posePub.publishCurrent();
             }
         });
+
+
+        context = this;
     }
 
+    Context context;
     @Override
     protected void onDestroy()
     {
         mTangoAPI.die();
         super.onDestroy();
-        Log.e("peanut","WHOA WHOA, WE'RE GOING DOWN!");
+        Log.e("peanut", "WHOA WHOA, WE'RE GOING DOWN!");
     }
 
     @Override
@@ -180,6 +189,14 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
                 NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(),getMasterUri());
         nodeMainExecutor.execute(posePub, nodeConfiguration);
         nodeMainExecutor.execute(depthPub, nodeConfiguration);
+
+         runOnUiThread(new Runnable() {
+             public void run() {
+                 surface = new MyGLSurfaceView(context);
+                 setContentView(surface);
+             }
+         });
+
     }
 
     @Override
@@ -211,8 +228,80 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
             @Override
             public void run()
             {
-                tv.setText(String.format("%.3f %s",mRateWatcher.getRate(id),res.getString(R.string.frequency_suffix)));
+                //tv.setText(String.format("%.3f %s",mRateWatcher.getRate(id),res.getString(R.string.frequency_suffix)));
             }
         });
+    }
+
+    MyGLSurfaceView surface;
+
+    public class MyGLSurfaceView extends GLSurfaceView {
+
+        MyGLSurfaceRenderer renderer;
+
+        public MyGLSurfaceView(Context context) {
+            super(context);
+
+            setEGLContextClientVersion(2);
+
+            renderer = new MyGLSurfaceRenderer(this);
+            setRenderer(renderer);
+        }
+
+        @Override
+        public void surfaceDestroyed(SurfaceHolder surfaceHolder)
+        {
+            super.surfaceDestroyed(surfaceHolder);
+        }
+
+        public class MyGLSurfaceRenderer implements GLSurfaceView.Renderer {
+
+            public MyGLSurfaceRenderer(MyGLSurfaceView surface) {
+                //super();
+            }
+
+            @Override
+            public void onDrawFrame(GL10 gl) {
+                GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+                //GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D,0,GLES20 GL_TEXTURE_1D_ARRAY);
+                //square.draw();
+            }
+
+            @Override
+            public void onSurfaceChanged(GL10 gl, int width, int height) {
+                // TODO Auto-generated method stub
+
+            }
+
+            int[] textures, framebuffers;
+
+            @Override
+            public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+                GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+                textures = new int[1];
+                framebuffers = new int[1];
+                GLES20.glGenTextures(1, textures, 0);
+                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,textures[0]);
+                mTangoAPI.setTextureId(textures[0]);
+                Log.e(TAG, "NEW API STARTING!");
+                mTangoAPI.start();
+
+
+                //GLES20.glActiveTexture (GLES20.GL_TEXTURE0);
+                GLES20.glGenFramebuffers(1,framebuffers,0);
+
+                GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
+                GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
+                GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, 1280,
+                        720, 0, GLES20.GL_RGBA,
+                        GLES20.GL_UNSIGNED_BYTE, null);
+
+                GLES20.glBindFramebuffer(textures[0],framebuffers[0]);
+                GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER,GLES20.GL_COLOR_ATTACHMENT0,GLES20.GL_TEXTURE_2D,textures[0],0);
+
+                //GLES20.glGetTexImage(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, data2);
+            }
+        }
+
     }
 }

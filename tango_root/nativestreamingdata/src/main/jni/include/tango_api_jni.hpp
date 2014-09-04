@@ -43,6 +43,9 @@
 #include <tango-api/depth-interface.h>
 #include <tango-api/video-overlay-interface.h>
 #include <tango-api/vio-interface.h>
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
+
 
 #define TAG "TangoJNI"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
@@ -53,7 +56,7 @@
 #define DEPTH_BPP 1
 
 #define CHECK_FAIL(x) (x == kCAPIFail || x == kCAPINotImplemented || x == kCAPIOperationFailed)
-
+#define VIDEOOVERLAY_WORKS
 void setbufferlength(int length);
 
 #ifdef __cplusplus
@@ -67,6 +70,8 @@ JNIEXPORT void JNICALL Java_edu_uml_TangoAPI_freeNativeBuffer(JNIEnv *env, jobje
 JNIEXPORT jobject JNICALL Java_edu_uml_TangoAPI_allocNativeOdomBuffer(JNIEnv *env, jobject caller);
 JNIEXPORT void JNICALL Java_edu_uml_TangoAPI_freeNativeOdomBuffer(JNIEnv *env, jobject caller);
 JNIEXPORT jint JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject caller);
+
+JNIEXPORT void JNICALL Java_edu_uml_TangoAPI_setTextureId(JNIEnv *env, jobject caller, jint tid);
 
 #ifdef __cplusplus
 }

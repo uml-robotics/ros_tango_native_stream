@@ -139,4 +139,8 @@ public class TangoAPI extends Thread {
     public static native boolean init();
 
     public static native boolean deinit();
+
+    public native void setTextureId(int tid);
+
+    //public native void offScreenRenderer();
 }
