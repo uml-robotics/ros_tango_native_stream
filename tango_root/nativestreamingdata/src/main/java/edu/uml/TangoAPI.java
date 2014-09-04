@@ -56,6 +56,7 @@ public class TangoAPI extends Thread {
         }
         vioReceiver = vrec;
         vioReceiver.buffer = (ByteBuffer) allocNativeOdomBuffer();
+        vioReceiver.buffer.order(ByteOrder.LITTLE_ENDIAN);
         depthReceiver = drec;
     }
 
@@ -120,7 +121,7 @@ public class TangoAPI extends Thread {
             if ((res & UPDATED_ODOM) != 0)
                 vioReceiver.VIOCallback();
             try {
-                Thread.sleep(0);
+                Thread.sleep(33);
             } catch (InterruptedException e) {
                 Log.e(TAG, "INSOMNIA", e);
             }

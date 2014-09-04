@@ -140,8 +140,13 @@ jint sendOdom(JNIEnv *env, jobject caller, VIOStatus viostatus, jint returnval)
 
     if (odombuf != NULL)
     {
-        memcpy(&(odombuf[0]),viostatus.translation,12);
-        memcpy(&(odombuf[3]),viostatus.translation,16);
+        odombuf[0]=viostatus.translation[0];
+        odombuf[1]=viostatus.translation[1];
+        odombuf[2]=viostatus.translation[2];
+        odombuf[3]=viostatus.rotation[0];
+        odombuf[4]=viostatus.rotation[1];
+        odombuf[5]=viostatus.rotation[2];
+        odombuf[6]=viostatus.rotation[3];
     }
 
     return returnval | UPDATED_ODOM;

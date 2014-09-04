@@ -70,22 +70,22 @@ public class PositionPublisher extends VIOReceiver implements NodeMain {
             Time t = connectedNode.getCurrentTime();
 
             mOdom.getHeader().setStamp(t);
-            mOdom.getPose().getPose().getOrientation().setX(-buffer.getFloat(5) / buffer.getFloat(6)); //transpositions gleaned from OLogic. see NOTICE
-            mOdom.getPose().getPose().getOrientation().setY(buffer.getFloat(3) / buffer.getFloat(6));  //normalization = not
-            mOdom.getPose().getPose().getOrientation().setZ(-buffer.getFloat(4) / buffer.getFloat(6));
-            mOdom.getPose().getPose().getOrientation().setW(buffer.getFloat(6) / buffer.getFloat(6));
-            mOdom.getPose().getPose().getPosition().setX(buffer.getFloat(2));
+            mOdom.getPose().getPose().getOrientation().setX(-buffer.getFloat(20) / buffer.getFloat(24)); //transpositions gleaned from OLogic. see NOTICE
+            mOdom.getPose().getPose().getOrientation().setY(buffer.getFloat(12) / buffer.getFloat(24));  //normalization = not
+            mOdom.getPose().getPose().getOrientation().setZ(-buffer.getFloat(16) / buffer.getFloat(24));
+            mOdom.getPose().getPose().getOrientation().setW(buffer.getFloat(20) / buffer.getFloat(24));
+            mOdom.getPose().getPose().getPosition().setX(buffer.getFloat(8));
             mOdom.getPose().getPose().getPosition().setY(-buffer.getFloat(0));
-            mOdom.getPose().getPose().getPosition().setZ(buffer.getFloat(1));
+            mOdom.getPose().getPose().getPosition().setZ(buffer.getFloat(4));
 
             mTFMessage.getTransforms().get(0).getHeader().setStamp(t);
             mTFMessage.getTransforms().get(0).getTransform().getRotation().setX(mOdom.getPose().getPose().getOrientation().getX());
             mTFMessage.getTransforms().get(0).getTransform().getRotation().setY(mOdom.getPose().getPose().getOrientation().getY());
             mTFMessage.getTransforms().get(0).getTransform().getRotation().setZ(mOdom.getPose().getPose().getOrientation().getZ());
             mTFMessage.getTransforms().get(0).getTransform().getRotation().setW(mOdom.getPose().getPose().getOrientation().getW());
-            mTFMessage.getTransforms().get(0).getTransform().getTranslation().setX(buffer.getFloat(2));
+            mTFMessage.getTransforms().get(0).getTransform().getTranslation().setX(buffer.getFloat(8));
             mTFMessage.getTransforms().get(0).getTransform().getTranslation().setY(-buffer.getFloat(0));
-            mTFMessage.getTransforms().get(0).getTransform().getTranslation().setZ(buffer.getFloat(1));
+            mTFMessage.getTransforms().get(0).getTransform().getTranslation().setZ(buffer.getFloat(4));
 
             tfMessagePublisher.publish(mTFMessage);
             odometryPublisher.publish(mOdom);
