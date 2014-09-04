@@ -126,7 +126,7 @@ public class TangoAPI extends Thread {
             if ((res & UPDATED_ODOM) != 0)
                 vioReceiver.VIOCallback(tx, ty, tz, rx, ry, rz, rw);
             try {
-                sleep(10);
+                sleep(33);
             } catch (InterruptedException e) {
                 Log.e(TAG, "INSOMNIA", e);
             }
