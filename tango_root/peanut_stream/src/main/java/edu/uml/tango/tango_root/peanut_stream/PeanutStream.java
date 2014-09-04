@@ -118,7 +118,7 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
             depthPub.setOkPublish(sharedPreferences.getBoolean("tb2_checked",false));
         }
         mTangoAPI = new TangoAPI(posePub, depthPub);
-        //depthPub.start(mTangoAPI);
+        mTangoAPI.start();
 
 
         EditText e1 = (EditText) findViewById(R.id.positionEditText);
@@ -169,8 +169,6 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
                 posePub.publishCurrent();
             }
         });
-
-
         context = this;
     }
 
@@ -190,13 +188,12 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
         nodeMainExecutor.execute(posePub, nodeConfiguration);
         nodeMainExecutor.execute(depthPub, nodeConfiguration);
 
-         runOnUiThread(new Runnable() {
+         /*runOnUiThread(new Runnable() {
              public void run() {
                  surface = new MyGLSurfaceView(context);
                  setContentView(surface);
              }
-         });
-
+         }); */
     }
 
     @Override
@@ -232,7 +229,7 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
             }
         });
     }
-
+/*
     MyGLSurfaceView surface;
 
     public class MyGLSurfaceView extends GLSurfaceView {
@@ -303,5 +300,5 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
             }
         }
 
-    }
+    }*/
 }
