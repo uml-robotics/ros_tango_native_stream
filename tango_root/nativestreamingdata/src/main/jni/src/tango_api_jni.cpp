@@ -33,6 +33,7 @@ video_overlay_handle_t *overlay;
 vio_handle_t *vio;
 jobject globalRef;
 int textureID = -1;
+bool tango_ready = false;
 
 int _depthwidth, _depthheight;
 union DEPTH_STUFF_ {
@@ -267,28 +268,6 @@ JNIEXPORT jint JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject caller)
           | (((int) depth_stuff_buffer.bytes[i]) & 0x00ff);
         //LOGE("%d",(int)depth_stuff.shorts[i/2]);
     }
-
-#ifdef VIDEOOVERLAY_WORKS
-    {
-        double color_timestamp;
-
-        int _width = 720, _height = 1280;
-
-        CAPIErrorCodes videoerr = VideoOverlayRenderLatestFrame(application, textureID, _width, _height, &color_timestamp);
-        if (CHECK_FAIL(videoerr))
-        {
-            LOGE("Could not get latest color frame %d ERR %d", textureID, videoerr);
-            RETURN_AFTER_PUBLISHING_ODOM(UPDATED_DEPTH);
-        }else
-        {
-            if (color_timestamp == _color_timestamp)
-                RETURN_AFTER_PUBLISHING_ODOM(UPDATED_DEPTH);
-            _color_timestamp = color_timestamp;
-            RETURN_AFTER_PUBLISHING_ODOM(UPDATED_DEPTH);
-        }
-
-    }
-#endif
 
     RETURN_AFTER_PUBLISHING_ODOM(UPDATED_DEPTH);
 }

@@ -39,9 +39,8 @@ import javax.microedition.khronos.opengles.GL10;
 /**
  * Created by csrobot on 9/4/14.
  */
-public class OffScreenRenderer extends Thread {
-    private static final String TAG = "OffScreenRenderer";
-
+public class OffscreenRenderer extends Thread {
+    private static final String TAG = "OffscreenRenderer";
     @Override
     public void start() {
         Log.e(TAG, "STARTING");
@@ -61,8 +60,5 @@ public class OffScreenRenderer extends Thread {
 
     public static native void dowork();
 
-
     MyGLSurfaceView surface;
-
-
- }
+}
