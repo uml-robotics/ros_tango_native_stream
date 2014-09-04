@@ -104,6 +104,7 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
             posePub = new PositionPublisher();
             posePub.setParentId(sharedPreferences.getString("e1_text",getResources().getString(R.string.parent_id)));
             posePub.setFrameId(sharedPreferences.getString("e2_text",getResources().getString(R.string.odom_frame_id)));
+            posePub.setCameraId(sharedPreferences.getString("e4_text",getResources().getString(R.string.depth_frame_id)));
             posePub.setOkPublish(sharedPreferences.getBoolean("tb1_checked",false));
             posePub.setRateWatcher(mRateWatcher.add(R.id.odom_rate));
         }

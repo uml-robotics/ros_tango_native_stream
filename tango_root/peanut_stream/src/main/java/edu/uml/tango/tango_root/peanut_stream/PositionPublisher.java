@@ -51,7 +51,8 @@ public class PositionPublisher extends VIOReceiver implements NodeMain {
     private Publisher<PoseStamped> poseStampedPublisher;
 
     private TFMessage mTFMessage;
-    private String frameId, parentId;
+    private TFMessage mTFMessage2;
+    private String frameId, parentId,cameraId;
     private boolean okPublish;
 
     private Odometry mOdom;
@@ -90,7 +91,19 @@ public class PositionPublisher extends VIOReceiver implements NodeMain {
             mTFMessage.getTransforms().get(0).getTransform().getTranslation().setY(-x);
             mTFMessage.getTransforms().get(0).getTransform().getTranslation().setZ(y);
 
+            mTFMessage2.getTransforms().get(0).getHeader().setFrameId(frameId);
+            mTFMessage2.getTransforms().get(0).getHeader().setStamp(t);
+            mTFMessage2.getTransforms().get(0).setChildFrameId(cameraId);
+            mTFMessage2.getTransforms().get(0).getTransform().getRotation().setX(-0.499999841466);
+            mTFMessage2.getTransforms().get(0).getTransform().getRotation().setY(0.499601836645);
+            mTFMessage2.getTransforms().get(0).getTransform().getRotation().setZ(-0.499999841466);
+            mTFMessage2.getTransforms().get(0).getTransform().getRotation().setW(0.500398163355);
+            mTFMessage2.getTransforms().get(0).getTransform().getTranslation().setX(0);
+            mTFMessage2.getTransforms().get(0).getTransform().getTranslation().setY(0);
+            mTFMessage2.getTransforms().get(0).getTransform().getTranslation().setZ(0);
+
             tfMessagePublisher.publish(mTFMessage);
+            tfMessagePublisher.publish(mTFMessage2);
             odometryPublisher.publish(mOdom);
             if (mRateProvider != null)
                 mRateProvider.addStamp(t.secs,t.nsecs);
@@ -109,6 +122,9 @@ public class PositionPublisher extends VIOReceiver implements NodeMain {
     }
     public void setFrameId(String frameId) {
         this.frameId = frameId;
+    }
+    public void setCameraId(String cameraId) {
+        this.cameraId = cameraId;
     }
 
     public void setOkPublish(boolean okPublish) {
@@ -141,6 +157,10 @@ public class PositionPublisher extends VIOReceiver implements NodeMain {
                     mOdom = connectedNode.getTopicMessageFactory().newFromType(Odometry._TYPE);
                 if(mPoseStamped == null)
                     mPoseStamped = connectedNode.getTopicMessageFactory().newFromType(PoseStamped._TYPE);
+                if(mTFMessage2 == null)
+                    mTFMessage2 = connectedNode.getTopicMessageFactory().newFromType(TFMessage._TYPE);
+                if (mTFMessage2 != null && mTFMessage2.getTransforms().size() == 0)
+                    mTFMessage2.getTransforms().add((TransformStamped) connectedNode.getTopicMessageFactory().newFromType(TransformStamped._TYPE));
             } catch (Exception ex) {
                 Log.e("PositionPublisher", "Exception while initializing", ex);
             }
