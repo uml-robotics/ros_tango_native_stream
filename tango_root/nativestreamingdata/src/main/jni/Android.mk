@@ -9,7 +9,8 @@ include $(PREBUILT_SHARED_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_MODULE := tango_api_jni
 LOCAL_SHARED_LIBRARIES += tango_api
-LOCAL_SRC_FILES := src/tango_api_jni.cpp
+LOCAL_SRC_FILES := src/tango_api_jni.cpp \
+                   src/offscreen.cpp
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/src \
 	$(LOCAL_PATH)/include
 LOCAL_EXPORT_C_INCLUDES += $(LOCAL_PATH)/src \

@@ -9,8 +9,9 @@
 #define TAG "TangoOffscreen"
 #include <common.h>
 #include <math.h>
-#include <GL/glew.h>
-#include <GL/glut.h>
+#include <GLES/gl.h>
+#include <GLES/glext.h>
+#include <GLES/glplatform.h>
 
 #define CLR_W 1280
 #define CLR_H 720
@@ -19,9 +20,13 @@
 extern "C" {
 #endif
 
+extern bool tango_ready;
+extern int textureID;
+extern application_handle_t *application;
+
 void scrape(void *destination);
-void renderScrape(void *destionation, uint32_t w, uint32_t h)
-void initOffscreen(uint32_t w, uint32_t h, glint *textureID);
+void renderScrape(void *destionation, uint32_t w, uint32_t h);
+void initOffscreen(uint32_t w, uint32_t h, GLint *textureID);
 
 JNIEXPORT void JNICALL Java_edu_uml_OffscreenRenderer_dowork(JNIEnv *env, jobject caller);
 

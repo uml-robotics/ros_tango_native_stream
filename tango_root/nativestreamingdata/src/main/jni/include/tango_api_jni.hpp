@@ -30,9 +30,6 @@
 #ifndef TANGO_API_JNI_H_
 #define TANGO_API_JNI_H_
 
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
-
 #define TAG "TangoJNI"
 #include <common.h>
 
@@ -54,8 +51,6 @@ JNIEXPORT void JNICALL Java_edu_uml_TangoAPI_freeNativeBuffer(JNIEnv *env, jobje
 JNIEXPORT jobject JNICALL Java_edu_uml_TangoAPI_allocNativeOdomBuffer(JNIEnv *env, jobject caller);
 JNIEXPORT void JNICALL Java_edu_uml_TangoAPI_freeNativeOdomBuffer(JNIEnv *env, jobject caller);
 JNIEXPORT jint JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject caller);
-
-JNIEXPORT void JNICALL Java_edu_uml_TangoAPI_setTextureId(JNIEnv *env, jobject caller, jint tid);
 
 #ifdef __cplusplus
 }

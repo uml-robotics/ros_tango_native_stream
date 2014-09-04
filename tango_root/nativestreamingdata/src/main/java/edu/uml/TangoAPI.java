@@ -31,7 +31,6 @@ package edu.uml;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
 
 import android.util.Log;
 
@@ -46,7 +45,7 @@ public class TangoAPI extends Thread {
     private boolean mBreakout = false;
     private static final String TAG = "TangoApi";
     private boolean ok = true;
-    OffScreenRenderer offScreenRenderer;
+    OffscreenRenderer offScreenRenderer;
 
     public TangoAPI(VIOReceiver vrec, DepthReceiver drec) {
         if (vrec == null) {
@@ -102,7 +101,7 @@ public class TangoAPI extends Thread {
         Log.e(TAG, "STARTING");
         mBreakout = false;
         ok = true;
-        offScreenRenderer = new OffScreenRenderer();
+        offScreenRenderer = new OffscreenRenderer();
         offScreenRenderer.start();
         State currState = getState();
         Log.e(TAG, "CURRENT THREAD STATE = " + currState.toString());
