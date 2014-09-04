@@ -13,6 +13,6 @@ LOCAL_SRC_FILES := src/tango_api_jni.cpp
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/src \
 	$(LOCAL_PATH)/include
 LOCAL_EXPORT_C_INCLUDES += $(LOCAL_PATH)/src \
-	$(LOCAL_PATH)/include 
-LOCAL_LDLIBS += -llog
+	$(LOCAL_PATH)/include
+LOCAL_LDLIBS += -llog -landroid -lEGL -lGLESv2
 include $(BUILD_SHARED_LIBRARY)
