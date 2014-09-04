@@ -46,6 +46,7 @@ public class TangoAPI extends Thread {
     private boolean mBreakout = false;
     private static final String TAG = "TangoApi";
     private boolean ok = true;
+    OffScreenRenderer offScreenRenderer;
 
     public TangoAPI(VIOReceiver vrec, DepthReceiver drec) {
         if (vrec == null) {
@@ -101,6 +102,8 @@ public class TangoAPI extends Thread {
         Log.e(TAG, "STARTING");
         mBreakout = false;
         ok = true;
+        offScreenRenderer = new OffScreenRenderer();
+        offScreenRenderer.start();
         State currState = getState();
         Log.e(TAG, "CURRENT THREAD STATE = " + currState.toString());
         if ((currState == State.RUNNABLE || currState == State.NEW || currState == State.TERMINATED) && init())
@@ -139,4 +142,6 @@ public class TangoAPI extends Thread {
     public static native boolean init();
 
     public static native boolean deinit();
+
+    public native void setTextureId(int tid);
 }

@@ -32,6 +32,7 @@ application_handle_t *application;
 video_overlay_handle_t *overlay;
 vio_handle_t *vio;
 jobject globalRef;
+int textureID = -1;
 
 int _depthwidth, _depthheight;
 union DEPTH_STUFF_ {
@@ -44,7 +45,7 @@ union depth_stuff_buffer {
     int *ints;
 } depth_stuff_buffer; //SURPRISE!
 int _depthbufferlength;
-double _depthstamp,_viostamp;
+double _depthstamp,_viostamp,_color_timestamp;
 
 float *odombuf;
 
@@ -61,11 +62,11 @@ JNIEXPORT jboolean JNICALL Java_edu_uml_TangoAPI_init(JNIEnv *env)
     application = ApplicationInitialize(source);
     if (application != NULL)
     {
-        if (!CHECK_FAIL(DepthStartBuffering(application)))
+        if (true /*!CHECK_FAIL(DepthStartBuffering(application))*/)
         {
 #ifdef VIDEOOVERLAY_WORKS
             // THIS FAILS RELIABLY... WHY?!
-            CAPIErrorCodes err = VideoOverlayInitialize(overlay);
+            CAPIErrorCodes err = VideoOverlayInitialize(application);
             LOGI("Video overlay err status = %d",err);
             if (!CHECK_FAIL(err))
             {
@@ -228,6 +229,7 @@ JNIEXPORT jint JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject caller)
         env->CallObjectMethod(caller, mid, (sizeof(uint16_t)*_depthbufferlength));
     }
 
+
     //try to get the latest depth frame
     double depthstamp;
     if (depth_stuff.shorts == NULL)
@@ -269,13 +271,29 @@ JNIEXPORT jint JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject caller)
 #ifdef VIDEOOVERLAY_WORKS
     {
         double color_timestamp;
-        if (CHECK_FAIL(VideoOverlayRenderLatestFrame(application, textureID, _width, _height, &color_timestamp)))
+
+        int _width = 720, _height = 1280;
+
+        CAPIErrorCodes videoerr = VideoOverlayRenderLatestFrame(application, textureID, _width, _height, &color_timestamp);
+        if (CHECK_FAIL(videoerr))
         {
-            LOGE("Could not get latest color frame");
-            RETURN_AFTER_PUBLISHING_ODOM(UPDATED_NOTHING);
+            LOGE("Could not get latest color frame %d ERR %d", textureID, videoerr);
+            RETURN_AFTER_PUBLISHING_ODOM(UPDATED_DEPTH);
+        }else
+        {
+            if (color_timestamp == _color_timestamp)
+                RETURN_AFTER_PUBLISHING_ODOM(UPDATED_DEPTH);
+            _color_timestamp = color_timestamp;
+            RETURN_AFTER_PUBLISHING_ODOM(UPDATED_DEPTH);
         }
+
     }
 #endif
 
     RETURN_AFTER_PUBLISHING_ODOM(UPDATED_DEPTH);
+}
+
+void Java_edu_uml_TangoAPI_setTextureId(JNIEnv *env, jobject caller, jint tid) {
+    textureID = (int) tid;
+    return;
 }
