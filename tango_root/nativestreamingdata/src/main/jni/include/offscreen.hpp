@@ -9,9 +9,9 @@
 #define TAG "TangoOffscreen"
 #include <common.h>
 #include <math.h>
-#include <GLES/gl.h>
-#include <GLES/glext.h>
-#include <GLES/glplatform.h>
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
+#include <GLES2/gl2platform.h>
 
 #define CLR_W 1280
 #define CLR_H 720

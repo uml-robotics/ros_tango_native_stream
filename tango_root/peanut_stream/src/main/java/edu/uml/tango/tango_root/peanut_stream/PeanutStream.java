@@ -51,7 +51,7 @@ import org.ros.node.NodeMainExecutor;
 
 import android.util.Log;
 
-import edu.uml.OffScreenRenderer;
+import edu.uml.OffscreenRenderer;
 import edu.uml.TangoAPI;
 
 public class PeanutStream extends RosFragmentActivity implements RateWatcher.RateUpdater{
@@ -89,9 +89,12 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
         }
     }
 
+    OffscreenRenderer offscreenRenderer;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        offscreenRenderer = new OffscreenRenderer(getApplication());
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -113,7 +116,6 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
             depthPub.setOkPublish(sharedPreferences.getBoolean("tb2_checked",false));
         }
         mTangoAPI = new TangoAPI(posePub, depthPub);
-        OffScreenRenderer.context = context;
         mTangoAPI.start();
 
 
