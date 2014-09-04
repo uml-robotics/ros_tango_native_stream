@@ -33,13 +33,10 @@ package edu.uml.tango.tango_root.peanut_stream;
 import android.content.res.Resources;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.opengl.GLES20;
-import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.view.MotionEvent;
-import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -54,9 +51,7 @@ import org.ros.node.NodeMainExecutor;
 
 import android.util.Log;
 
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
-
+import edu.uml.OffScreenRenderer;
 import edu.uml.TangoAPI;
 
 public class PeanutStream extends RosFragmentActivity implements RateWatcher.RateUpdater{
@@ -118,6 +113,7 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
             depthPub.setOkPublish(sharedPreferences.getBoolean("tb2_checked",false));
         }
         mTangoAPI = new TangoAPI(posePub, depthPub);
+        OffScreenRenderer.context = context;
         mTangoAPI.start();
 
 

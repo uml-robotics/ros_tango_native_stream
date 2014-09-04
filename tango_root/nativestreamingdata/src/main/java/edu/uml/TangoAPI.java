@@ -33,6 +33,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
+import android.content.Context;
 import android.util.Log;
 
 public class TangoAPI extends Thread {
@@ -47,6 +48,7 @@ public class TangoAPI extends Thread {
     private static final String TAG = "TangoApi";
     private boolean ok = true;
     OffScreenRenderer offScreenRenderer;
+    Context context;
 
     public TangoAPI(VIOReceiver vrec, DepthReceiver drec) {
         if (vrec == null) {
