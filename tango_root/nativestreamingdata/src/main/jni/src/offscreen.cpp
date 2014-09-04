@@ -8,17 +8,12 @@ void scrapeTexture(void *destination)
 
 void renderScrape(void *destination, uint32_t w, uint32_t h)
 {
-
-    GLuint fb,textureID;
-    glGenTextures(1, &textureID);
+    GLuint fb;
+    glGenTextures(1, (GLuint*)(&textureID));
     glGenFramebuffers(1, &fb);
-    glBindTexture(GL_TEXTURE_2D, textureID);
+    glBindFramebuffer(GL_FRAMEBUFFER, fb);
 
     double color_timestamp;
-
-    glBindFramebuffer(GL_FRAMEBUFFER, fb);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                            GL_TEXTURE_2D, textureID, 0);
 
     VideoOverlayRenderLatestFrame(application, textureID, w, h, &color_timestamp);
 

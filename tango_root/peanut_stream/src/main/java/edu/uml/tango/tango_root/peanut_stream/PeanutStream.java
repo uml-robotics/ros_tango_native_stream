@@ -89,12 +89,9 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
         }
     }
 
-    OffscreenRenderer offscreenRenderer;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        offscreenRenderer = new OffscreenRenderer(getApplication());
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -167,10 +164,8 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
                 posePub.publishCurrent();
             }
         });
-        context = this;
     }
 
-    Context context;
     @Override
     protected void onDestroy()
     {

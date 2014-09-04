@@ -33,7 +33,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.util.AttributeSet;
 import android.util.Log;
+import android.view.View;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -41,8 +43,8 @@ import javax.microedition.khronos.opengles.GL10;
 public class OffscreenRenderer extends GLSurfaceView {
     private static final String TAG = "OffscreenRenderer";
 
-    public OffscreenRenderer(Context context) {
-        super(context);
+    public OffscreenRenderer(Context context, AttributeSet attributeSet) {
+        super(context, attributeSet);
         setRenderer(new Renderer());
     }
 
