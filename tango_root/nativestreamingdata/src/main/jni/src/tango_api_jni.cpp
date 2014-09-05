@@ -45,8 +45,6 @@ union depth_stuff_buffer {
 } depth_stuff_buffer; //SURPRISE!
 int _depthbufferlength;
 
-float *odombuf;
-
 const int UPDATED_NOTHING = 0;
 const int UPDATED_ODOM = 1 << 1;
 const int UPDATED_DEPTH = 1 << 2;
@@ -200,8 +198,6 @@ void sendOdom(void *ctxt, const TangoPoseData *viostatus)
     {
         env = ((tango_context*)ctxt)->env;
         caller = ((tango_context*)ctxt)->caller;
-
-    if (odombuf != NULL)
     }
     if (env == NULL || caller == NULL)
     {
@@ -262,17 +258,6 @@ JNIEXPORT void JNICALL Java_edu_uml_TangoAPI_freeNativeBuffer(JNIEnv *env, jobje
 {
     env->DeleteGlobalRef(globalRef);
     free(depth_stuff.shorts);
-}
-
-JNIEXPORT jobject JNICALL Java_edu_uml_TangoAPI_allocNativeOdomBuffer(JNIEnv *env, jobject caller)
-{
-    odombuf = (float*)malloc(7*sizeof(float));
-    jobject directBuffer = env->NewDirectByteBuffer(odombuf, 7*sizeof(float));
-    return env->NewGlobalRef(directBuffer);
-}
-JNIEXPORT void JNICALL Java_edu_uml_TangoAPI_freeNativeOdomBuffer(JNIEnv *env, jobject caller)
-{
-    free(odombuf);
 }
 
 JNIEXPORT jint JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject caller)
