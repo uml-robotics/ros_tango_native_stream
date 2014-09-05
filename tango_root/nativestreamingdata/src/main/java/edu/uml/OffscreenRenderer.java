@@ -58,11 +58,10 @@ public class OffscreenRenderer extends GLSurfaceView {
             //init(width, height);
             Log.i(TAG, "CHANGED");
         }
-
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
             Log.i(TAG, "CREATED");
         }
     }
-
     public static native void dowork();
-}
+
+ }

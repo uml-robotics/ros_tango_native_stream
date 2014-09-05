@@ -46,6 +46,7 @@ public class TangoAPI extends Thread {
     private boolean mBreakout = false;
     private static final String TAG = "TangoApi";
     private boolean ok = true;
+    Context context;
 
     public TangoAPI(VIOReceiver vrec, DepthReceiver drec) {
         if (vrec == null) {
@@ -61,7 +62,7 @@ public class TangoAPI extends Thread {
     }
 
     static {
-        System.loadLibrary("tango_api");
+        System.loadLibrary("tango_client_api");
         System.loadLibrary("tango_api_jni");
     }
 

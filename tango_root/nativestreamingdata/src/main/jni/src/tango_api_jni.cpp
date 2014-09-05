@@ -28,9 +28,7 @@
  * Author: Eric McCann <emccann@cs.uml.edu>
 */
 #include <tango_api_jni.hpp>
-application_handle_t *application;
-video_overlay_handle_t *overlay;
-vio_handle_t *vio;
+TangoConfig *config;
 jobject globalRef;
 int textureID = -1;
 bool tango_ready = false;
@@ -46,7 +44,6 @@ union depth_stuff_buffer {
     int *ints;
 } depth_stuff_buffer; //SURPRISE!
 int _depthbufferlength;
-double _depthstamp,_viostamp,_color_timestamp;
 
 float *odombuf;
 
@@ -54,104 +51,204 @@ const int UPDATED_NOTHING = 0;
 const int UPDATED_ODOM = 1 << 1;
 const int UPDATED_DEPTH = 1 << 2;
 
-JNIEXPORT jboolean JNICALL Java_edu_uml_TangoAPI_init(JNIEnv *env)
+struct _tango_context {
+    JNIEnv *env;
+    jobject *caller;
+};
+typedef struct _tango_context tango_context;
+
+static void onTangoEvent(void* context, const TangoEvent* event) {
+    if (strstr(event->description, "Exposed") != 0) {
+        LOGI("%s", event->description);
+    }
+}
+
+void depthCB(void *context, const TangoXYZij *xyzij)
 {
-    if (application != NULL)
-        return true;
-    LOGW("INITIALIZING!");
-    const char *source = TANGO_DATA_SOURCE;
-    application = ApplicationInitialize(source);
-    if (application != NULL)
+    LOGI("DEPTH");
+    JNIEnv *env = NULL;
+    jobject *caller = NULL;
+    if (context != NULL)
     {
-        if (true /*!CHECK_FAIL(DepthStartBuffering(application))*/)
+        env = ((tango_context*)context)->env;
+        caller = ((tango_context*)context)->caller;
+    }
+    for (int r=0;r<xyzij->ij_rows; r++)
+    {
+        for(int c=0;c<xyzij->ij_cols; c++)
         {
-#ifdef VIDEOOVERLAY_WORKS
-            // THIS FAILS RELIABLY... WHY?!
-            CAPIErrorCodes err = VideoOverlayInitialize(application);
-            LOGI("Video overlay err status = %d",err);
-            if (!CHECK_FAIL(err))
+
+        }
+    }
+
+    if (_depthwidth != xyzij->ij_cols || _depthheight != xyzij->ij_rows)
+    {
+        _depthwidth = xyzij->ij_cols;
+        _depthheight = xyzij->ij_rows;
+        _depthbufferlength = _depthwidth * _depthheight * DEPTH_BPP;
+        LOGI("Trying to tell java-land to resize the ByteBuffer to %d",(sizeof(uint16_t)*_depthbufferlength));
+        if (env == NULL || caller == NULL)
+        {
+            return;
+        }
+        static jmethodID mid = 0;
+        if (mid == 0)
+        {
+            jclass clazz = env->GetObjectClass(*caller);
+            mid = env->GetMethodID(clazz, "setBufferLength", "(I)V");
+        }
+        if (mid == 0)
+        {
+            LOGE("COULD NOT FIND setbufferlength METHOD!!!");
+            return;
+        }
+        env->CallObjectMethod(*caller, mid, (sizeof(uint16_t)*_depthbufferlength));
+    }
+
+    //try to get the latest depth frame
+    double depthstamp;
+    if (depth_stuff.shorts == NULL)
+    {
+        LOGE("DEPTH HOLDER IS NULL - GTFO!");
+        return;
+    }
+    if (depth_stuff_buffer.ints == NULL)
+    {
+        LOGW("MALLOCING");
+        depth_stuff_buffer.ints = (int*)malloc(sizeof(int)*_depthbufferlength);
+    }
+    int i=0;
+    if (depth_stuff.shorts == NULL || depth_stuff_buffer.ints == NULL)
+    {
+        LOGE("SOMETHING IS NULL VERY DEEP IN DOWORK - GTFO!");
+        return;
+    }
+    for(;i<sizeof(int)*_depthbufferlength;i+=sizeof(int))
+    {
+        //convert from ints to shorts
+        depth_stuff.shorts[i/4] = (uint16_t)((((int) depth_stuff_buffer.bytes[i + 1]) << 8) & 0xff00)
+          | (((int) depth_stuff_buffer.bytes[i]) & 0x00ff);
+        //LOGE("%d",(int)depth_stuff.shorts[i/2]);
+    }
+}
+
+JNIEXPORT jboolean JNICALL Java_edu_uml_TangoAPI_init(JNIEnv *env, jobject c)
+{
+    tango_context ctxt;
+    ctxt.env = env;
+    ctxt.caller = &c;
+    LOGW("INITIALIZING!");
+    if (CHECK_FAIL(TangoService_initialize())) {
+        LOGE("Failed to initialize service");
+        return false;
+    }
+    if (config == NULL) {
+        config = TangoConfig_alloc();
+        if (!config) {
+            LOGE("?><!@#");
+            return false;
+        }
+
+        bool currmotion, currdepth;
+        if (!CHECK_FAIL(TangoService_getConfig(TANGO_CONFIG_CURRENT, config)))
+        {
+            if ((CHECK_FAIL(TangoConfig_getBool(config, "config_enable_depth", &currdepth)) || !currdepth))
             {
-#endif
-                if (!CHECK_FAIL(VIOInitialize(application, true, NULL)))
-                {
-                    LOGI("INITIALIZED");
-                    return (jboolean)true;
-                }
-                else
-                {
-                    LOGE("Failed to initialize VIO");
+                if (CHECK_FAIL(TangoConfig_setBool(config, "config_enable_depth", true))) {
+                    LOGE("COULD NOT SET MISSING OR WRONG PARAM: depth");
                     return false;
                 }
-#ifdef VIDEOOVERLAY_WORKS
             }
-            else
-                LOGE("Failed to initialize VideoOverlay");
-#endif
+            if ((CHECK_FAIL(TangoConfig_getBool(config, "config_enable_motion_tracking", &currmotion)) || !currmotion))
+            {
+                if (CHECK_FAIL(TangoConfig_setBool(config, "config_enable_motion_tracking", true))) {
+                    LOGE("COULD NOT SET MISSING OR WRONG PARAM: motion_tracking");
+                    return false;
+                }
+            }
         }
         else
         {
-            LOGE("Failed to start buffering");
+            LOGE("COULD NOT GETCONFIG");
             return false;
         }
     }
-    else
-        LOGE("Failed to initialize application");
-    return (jboolean)false;
-}
-
-JNIEXPORT jboolean JNICALL Java_edu_uml_TangoAPI_deinit(JNIEnv *env)
-{
-    LOGW("DEINITIALIZING!");
-    if (application != NULL)
+    if (CHECK_FAIL(TangoService_lockConfig(config)) || CHECK_FAIL(TangoService_connect(&ctxt)))
     {
-        CAPIErrorCodes err;
-#ifdef VIDEOOVERLAY_WORKS
-        err = VideoOverlayShutdown(application);
-        if (err != 0)
-            LOGE("Deinitialized overlay with error status: %d", (int)err);
-#endif
-        err = VIOShutdown(application);
-        if (CHECK_FAIL(err) == 0)
-            vio = NULL;
-        if (err != 0)
-            LOGE("Deinitialized vio with error status: %d", (int)err);
-        err = DepthStopBuffering(application);
-        if (err != 0)
-            LOGE("Deinitialized application with error status: %d", (int)err);
-
-        err = ApplicationShutdown(application);
-        if (CHECK_FAIL(err) == 0)
-            application = NULL;
-        if (err != 0)
-            LOGE("Deinitialized application with error status: %d", (int)err);
+        LOGE("Config failed to lock, or connect failed");
+        return false;
     }
-    bool success = (application == NULL);
-    application = NULL;
-    /*if (_depthbuffer != NULL)
-    {
-        free(_depthbuffer);
-        _depthbuffer = NULL;
-    }*/
-    return success;
+    TangoCoordinateFramePair pairs;
+    pairs.base = TANGO_COORDINATE_FRAME_START_OF_SERVICE;
+    pairs.target = TANGO_COORDINATE_FRAME_DEVICE;
+    TangoService_connectOnPoseAvailable(1, &pairs, sendOdom);
+
+    TangoService_connectOnXYZijAvailable(depthCB);
+
+    if (CHECK_FAIL(TangoService_connectOnTangoEvent(onTangoEvent))) {
+        LOGI("TangoService_connectOnTangoEvent(): Failed");
+        return false;
+    }
 }
 
-jint sendOdom(JNIEnv *env, jobject caller, VIOStatus viostatus, jint returnval)
+void sendOdom(void *ctxt, const TangoPoseData *viostatus)
 {
-    if (viostatus.timestamp == _viostamp)
-        return returnval;
+    LOGI("ODOM");
+    JNIEnv *env;
+    jobject *caller;
+    if (ctxt != NULL)
+    {
+        env = ((tango_context*)ctxt)->env;
+        caller = ((tango_context*)ctxt)->caller;
 
     if (odombuf != NULL)
-    {
-        odombuf[0]=viostatus.translation[0];
-        odombuf[1]=viostatus.translation[1];
-        odombuf[2]=viostatus.translation[2];
-        odombuf[3]=viostatus.rotation[0];
-        odombuf[4]=viostatus.rotation[1];
-        odombuf[5]=viostatus.rotation[2];
-        odombuf[6]=viostatus.rotation[3];
     }
+    if (env == NULL || caller == NULL)
+    {
+        LOGE("NULL ENV OR CALLER");
+        return;
+    }
+    static jfieldID tx;
+    static jfieldID ty;
+    static jfieldID tz;
+    static jfieldID rx;
+    static jfieldID ry;
+    static jfieldID rz;
+    static jfieldID rw;
+    if (tx == 0 || ty == 0 || tz == 0 || rx == 0 || ry == 0 || rz == 0 || rw == 0)
+    {
+        jclass clazz = env->GetObjectClass(*caller);
+        tx = env->GetFieldID(clazz, "tx", "F");
+        ty = env->GetFieldID(clazz, "ty", "F");
+        tz = env->GetFieldID(clazz, "tz", "F");
+        rx = env->GetFieldID(clazz, "rx", "F");
+        ry = env->GetFieldID(clazz, "ry", "F");
+        rz = env->GetFieldID(clazz, "rz", "F");
+        rw = env->GetFieldID(clazz, "rw", "F");
+    }
+    if (tx == 0 || ty == 0 || tz == 0 || rx == 0 || ry == 0 || rz == 0 || rw == 0)
+    {
+        LOGE("COULD NOT FIND AN ODOM FIELD!!!");
+        return;
+    }
+    env->SetFloatField(*caller,tx,viostatus->translation[0]);
+    env->SetFloatField(*caller,ty,viostatus->translation[1]);
+    env->SetFloatField(*caller,tz,viostatus->translation[2]);
+    env->SetFloatField(*caller,rx,viostatus->orientation[0]);
+    env->SetFloatField(*caller,ry,viostatus->orientation[1]);
+    env->SetFloatField(*caller,rz,viostatus->orientation[2]);
+    env->SetFloatField(*caller,rw,viostatus->orientation[3]);
+}
 
-    return returnval | UPDATED_ODOM;
+JNIEXPORT jboolean JNICALL Java_edu_uml_TangoAPI_deinit(JNIEnv *e, jobject c)
+{
+    LOGW("DEINITIALIZING!");
+    TangoService_disconnect();
+    if (config != NULL) {
+        TangoService_unlockConfig();
+        TangoConfig_free(config);
+    }
+    return true;
 }
 
 JNIEXPORT jobject JNICALL Java_edu_uml_TangoAPI_allocNativeBuffer(JNIEnv *env, jobject caller, jint length)
@@ -180,13 +277,14 @@ JNIEXPORT void JNICALL Java_edu_uml_TangoAPI_freeNativeOdomBuffer(JNIEnv *env, j
 
 JNIEXPORT jint JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject caller)
 {
-    int status = UPDATED_NOTHING;
+    return UPDATED_NOTHING;
+    /*int status = UPDATED_NOTHING;
     if (application == NULL) return UPDATED_NOTHING;
     ApplicationDoStep(application);
 
     //VIO stuff
-    static VIOStatus viostatus;
-    CAPIErrorCodes err = VIOGetLatestPoseUnity(application,&viostatus);
+    static TangoPoseData data;
+    TangoErrorType err = TANGO_SUCCESS;
     if (CHECK_FAIL(err))
     {
         LOGE("Could not get closest pose");
@@ -204,7 +302,6 @@ JNIEXPORT jint JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject caller)
         LOGE("Could not get resolution");
         RETURN_AFTER_PUBLISHING_ODOM(UPDATED_NOTHING);
     }
-    tango_ready = true;
     //if it has changed or hasn't been initialized, allocate a buffer of appropriate size
 //    LOGI("HELP! Width: %d Height: %d BPP: %d", width, height, DEPTH_BPP);
     if (_depthwidth != dims[0] || _depthheight != dims[1])
@@ -230,7 +327,6 @@ JNIEXPORT jint JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject caller)
         }
         env->CallObjectMethod(caller, mid, (sizeof(uint16_t)*_depthbufferlength));
     }
-
 
     //try to get the latest depth frame
     double depthstamp;
@@ -270,10 +366,16 @@ JNIEXPORT jint JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject caller)
         //LOGE("%d",(int)depth_stuff.shorts[i/2]);
     }
 
-    RETURN_AFTER_PUBLISHING_ODOM(UPDATED_DEPTH);
-}
+#ifdef VIDEOOVERLAY_WORKS
+    {
+        double color_timestamp;
+        if (CHECK_FAIL(VideoOverlayRenderLatestFrame(application, textureID, _width, _height, &color_timestamp)))
+        {
+            LOGE("Could not get latest color frame");
+            RETURN_AFTER_PUBLISHING_ODOM(UPDATED_NOTHING);
+        }
+    }
+#endif
 
-void Java_edu_uml_TangoAPI_setTextureId(JNIEnv *env, jobject caller, jint tid) {
-    textureID = (int) tid;
-    return;
+    RETURN_AFTER_PUBLISHING_ODOM(UPDATED_DEPTH);*/
 }

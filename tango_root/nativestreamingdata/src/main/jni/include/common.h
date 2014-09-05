@@ -6,13 +6,7 @@
 #include <stdarg.h>
 #include <math.h>
 #include <stdio.h>
-#include <tango-api/public-api.h>
-#include <tango-api/application-interface.h>
-#include <tango-api/hardware-control-interface.h>
-#include <tango-api/util-interface.h>
-#include <tango-api/depth-interface.h>
-#include <tango-api/video-overlay-interface.h>
-#include <tango-api/vio-interface.h>
+#include <tango-api/tango_client_api.h>
 
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 #define LOGW(...) __android_log_print(ANDROID_LOG_WARN, TAG, __VA_ARGS__)

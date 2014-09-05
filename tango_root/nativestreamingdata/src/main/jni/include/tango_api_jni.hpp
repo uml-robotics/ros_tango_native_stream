@@ -33,10 +33,9 @@
 #define TAG "TangoJNI"
 #include <common.h>
 
-#define TANGO_DATA_SOURCE "[Superframes Small-Peanut]"
 #define DEPTH_BPP 1
 
-#define CHECK_FAIL(x) (x == kCAPIFail || x == kCAPINotImplemented || x == kCAPIOperationFailed)
+#define CHECK_FAIL(x) (x == TANGO_ERROR) // TangoErrorType
 #define VIDEOOVERLAY_WORKS
 void setbufferlength(int length);
 
@@ -44,7 +43,9 @@ void setbufferlength(int length);
 extern "C" {
 #endif
 
-JNIEXPORT jboolean JNICALL Java_edu_uml_TangoAPI_init(JNIEnv *env);
+void sendOdom(void *ctxt, const TangoPoseData *viostatus);
+
+JNIEXPORT jboolean JNICALL Java_edu_uml_TangoAPI_init(JNIEnv *env, jobject caller);
 JNIEXPORT jboolean JNICALL Java_edu_uml_TangoAPI_deinit(JNIEnv *env);
 JNIEXPORT jobject JNICALL Java_edu_uml_TangoAPI_allocNativeBuffer(JNIEnv *env, jobject caller, jint size);
 JNIEXPORT void JNICALL Java_edu_uml_TangoAPI_freeNativeBuffer(JNIEnv *env, jobject caller);
