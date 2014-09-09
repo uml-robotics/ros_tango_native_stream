@@ -30,10 +30,12 @@
 
 package edu.uml;
 
-public abstract class VIOReceiver {
+import java.nio.ByteBuffer;
 
-    public void VIOCallback(float tx, float ty, float tz,
-                            float rx, float ry, float rz, float rw)
+public abstract class VIOReceiver {
+    public ByteBuffer buffer;
+
+    public void VIOCallback()
     {
     }
 }

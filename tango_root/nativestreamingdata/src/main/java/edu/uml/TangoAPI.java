@@ -46,14 +46,6 @@ public class TangoAPI extends Thread {
     private static final String TAG = "TangoApi";
     private boolean ok = true;
 
-    float tx;
-    float ty;
-    float tz;
-    float rx;
-    float ry;
-    float rz;
-    float rw;
-
     public TangoAPI(VIOReceiver vrec, DepthReceiver drec) {
         if (vrec == null) {
             throw new IllegalArgumentException("TANGOAPI vioReceiver must not be null");
@@ -62,6 +54,8 @@ public class TangoAPI extends Thread {
             throw new IllegalArgumentException("TANGOAPI depthReceiver must not be null");
         }
         vioReceiver = vrec;
+        vioReceiver.buffer = (ByteBuffer) allocNativeOdomBuffer();
+        vioReceiver.buffer.order(ByteOrder.LITTLE_ENDIAN);
         depthReceiver = drec;
     }
 
@@ -124,9 +118,9 @@ public class TangoAPI extends Thread {
             if ((res & UPDATED_DEPTH) != 0)
                 depthReceiver.DepthCallback();
             if ((res & UPDATED_ODOM) != 0)
-                vioReceiver.VIOCallback(tx, ty, tz, rx, ry, rz, rw);
+                vioReceiver.VIOCallback();
             try {
-                sleep(33);
+                Thread.sleep(33);
             } catch (InterruptedException e) {
                 Log.e(TAG, "INSOMNIA", e);
             }
@@ -136,6 +130,9 @@ public class TangoAPI extends Thread {
 
     public native Object allocNativeBuffer(int size);
     public native void freeNativeBuffer();
+
+    public native Object allocNativeOdomBuffer();
+    public native void freeNativeOdomBuffer();
 
     public native int dowork();
 

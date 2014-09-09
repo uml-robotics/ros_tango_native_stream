@@ -46,6 +46,8 @@ union depth_stuff_buffer {
 int _depthbufferlength;
 double _depthstamp,_viostamp;
 
+float *odombuf;
+
 const int UPDATED_NOTHING = 0;
 const int UPDATED_ODOM = 1 << 1;
 const int UPDATED_DEPTH = 1 << 2;
@@ -135,36 +137,18 @@ jint sendOdom(JNIEnv *env, jobject caller, VIOStatus viostatus, jint returnval)
 {
     if (viostatus.timestamp == _viostamp)
         return returnval;
-    static jfieldID tx;
-    static jfieldID ty;
-    static jfieldID tz;
-    static jfieldID rx;
-    static jfieldID ry;
-    static jfieldID rz;
-    static jfieldID rw;
-    if (tx == 0 || ty == 0 || tz == 0 || rx == 0 || ry == 0 || rz == 0 || rw == 0)
+    if(odombuf != NULL)
     {
-        jclass clazz = env->GetObjectClass(caller);
-        tx = env->GetFieldID(clazz, "tx", "F");
-        ty = env->GetFieldID(clazz, "ty", "F");
-        tz = env->GetFieldID(clazz, "tz", "F");
-        rx = env->GetFieldID(clazz, "rx", "F");
-        ry = env->GetFieldID(clazz, "ry", "F");
-        rz = env->GetFieldID(clazz, "rz", "F");
-        rw = env->GetFieldID(clazz, "rw", "F");
+        //memcpy(&(odombuf[0]),viostatus.translation,12);
+        //memcpy(&(odombuf[3]),viostatus.translation,16);
+        odombuf[0]=viostatus.translation[0];
+        odombuf[1]=viostatus.translation[1];
+        odombuf[2]=viostatus.translation[2];
+        odombuf[3]=viostatus.rotation[0];
+        odombuf[4]=viostatus.rotation[1];
+        odombuf[5]=viostatus.rotation[2];
+        odombuf[6]=viostatus.rotation[3];
     }
-    if (tx == 0 || ty == 0 || tz == 0 || rx == 0 || ry == 0 || rz == 0 || rw == 0)
-    {
-        LOGE("COULD NOT FIND AN ODOM FIELD!!!");
-        return returnval;
-    }
-    env->SetFloatField(caller,tx,viostatus.translation[0]);
-    env->SetFloatField(caller,ty,viostatus.translation[1]);
-    env->SetFloatField(caller,tz,viostatus.translation[2]);
-    env->SetFloatField(caller,rx,viostatus.rotation[0]);
-    env->SetFloatField(caller,ry,viostatus.rotation[1]);
-    env->SetFloatField(caller,rz,viostatus.rotation[2]);
-    env->SetFloatField(caller,rw,viostatus.rotation[3]);
     return returnval | UPDATED_ODOM;
 }
 
@@ -179,6 +163,18 @@ JNIEXPORT void JNICALL Java_edu_uml_TangoAPI_freeNativeBuffer(JNIEnv *env, jobje
 {
     env->DeleteGlobalRef(globalRef);
     free(depth_stuff.shorts);
+}
+
+JNIEXPORT jobject JNICALL Java_edu_uml_TangoAPI_allocNativeOdomBuffer(JNIEnv *env, jobject caller)
+{
+    odombuf = (float*)malloc(7*sizeof(float));
+    jobject directBuffer = env->NewDirectByteBuffer(odombuf,7*sizeof(float));
+    return env->NewGlobalRef(directBuffer);
+}
+
+JNIEXPORT void JNICALL Java_edu_uml_TangoAPI_freeNativeOdomBuffer(JNIEnv *env, jobject caller)
+{
+    free(odombuf);
 }
 
 JNIEXPORT jint JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject caller)
