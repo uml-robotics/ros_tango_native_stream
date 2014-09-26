@@ -32,13 +32,12 @@ package edu.uml;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-import android.content.Context;
 import android.util.Log;
 
 public class TangoAPI extends Thread {
 
-    private final int UPDATED_DEPTH = 1 << 2;
-    private final int UPDATED_ODOM = 1 << 1;
+    private final int UPDATED_DEPTH = 1 << 2; // 0b10
+    private final int UPDATED_ODOM =  1 << 1; // 0b01
 
     private VIOReceiver vioReceiver;
     private DepthReceiver depthReceiver;
@@ -126,6 +125,9 @@ public class TangoAPI extends Thread {
                 Log.e(TAG, "INSOMNIA", e);
             }
         }
+
+
+
         Log.e(TAG, "Broke out");
     }
 

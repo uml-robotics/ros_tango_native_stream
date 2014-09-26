@@ -45,13 +45,14 @@ public class OffscreenRenderer extends GLSurfaceView {
 
     public OffscreenRenderer(Context context, AttributeSet attributeSet) {
         super(context, attributeSet);
+        setEGLContextClientVersion(0x2);
         setRenderer(new Renderer());
     }
 
     private class Renderer implements GLSurfaceView.Renderer {
         public void onDrawFrame(GL10 gl) {
             Log.i(TAG, "DRAW");
-            dowork();
+//            renderFrame();
         }
 
         public void onSurfaceChanged(GL10 gl, int width, int height) {
@@ -59,10 +60,8 @@ public class OffscreenRenderer extends GLSurfaceView {
             Log.i(TAG, "CHANGED");
         }
 
-        public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-            Log.i(TAG, "CREATED");
-        }
+        public void onSurfaceCreated(GL10 gl, EGLConfig config) {        }
     }
 
-    public static native void dowork();
+//    public static native void renderFrame();
 }

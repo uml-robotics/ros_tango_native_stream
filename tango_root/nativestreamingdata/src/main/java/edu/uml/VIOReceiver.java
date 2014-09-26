@@ -34,10 +34,16 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
 public abstract class VIOReceiver {
-
     public ByteBuffer buffer;
 
-    public void VIOCallback()
-    {
-    }
+    public abstract void VIOCallback();
+
+    public float getOrientationX() { return -buffer.getFloat(20) / buffer.getFloat(24); }
+    public float getOrientationY() { return  buffer.getFloat(12) / buffer.getFloat(24); }
+    public float getOrientationZ() { return -buffer.getFloat(16) / buffer.getFloat(24); }
+    public float getOrientationW() { return  buffer.getFloat(20) / buffer.getFloat(24); }
+
+    public float getPosX() { return  buffer.getFloat(8); }
+    public float getPosY() { return -buffer.getFloat(0); }
+    public float getPosZ() { return  buffer.getFloat(4); }
 }

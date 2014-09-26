@@ -28,15 +28,15 @@
 * POSSIBILITY OF SUCH DAMAGE.
 * Author: Jordan Allspaw <jallspaw@cs.uml.edu>
 -->
-    <RelativeLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-     android:layout_height="fill_parent"
-    android:layout_width="fill_parent"
-    >
+    android:layout_height="fill_parent"
+    android:layout_width="fill_parent">
 
     <edu.uml.OffscreenRenderer
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent" android:alpha="0" />
+        android:layout_height="fill_parent"
+        android:alpha="0" />
 
     <LinearLayout
         android:layout_width="fill_parent"

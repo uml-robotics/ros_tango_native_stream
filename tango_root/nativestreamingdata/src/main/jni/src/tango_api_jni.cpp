@@ -8,7 +8,8 @@
  * 1. Redistributions of source code must retain the above copyright notice,
  * this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- * notice, this list of conditions and the following disclaimer in the
+ * notice, this list of conditions and the following disclaimer in the    if(CHECK_FAIL(ApplicationDoStep(state->application))) LOGW("could not do step of application");
+
  * documentation and/or other materials provided with the distribution.
  * 3. Neither the name of the University of Massachusetts Lowell nor the names
  * from of its contributors may be used to endorse or promote products
@@ -44,9 +45,12 @@ union DEPTH_STUFF_ {
 union depth_stuff_buffer {
     unsigned char *bytes;
     int *ints;
-} depth_stuff_buffer; //SURPRISE!
+} depth_stuff_buffer;
+
 int _depthbufferlength;
-double _depthstamp,_viostamp,_color_timestamp;
+double _depthstamp,
+       _viostamp,
+       _color_timestamp;
 
 float *odombuf;
 
@@ -186,7 +190,7 @@ JNIEXPORT jint JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject caller)
 
     //VIO stuff
     static VIOStatus viostatus;
-    CAPIErrorCodes err = VIOGetLatestPoseUnity(application,&viostatus);
+    CAPIErrorCodes err = VIOGetLatestPoseUnity(application, &viostatus);
     if (CHECK_FAIL(err))
     {
         LOGE("Could not get closest pose");

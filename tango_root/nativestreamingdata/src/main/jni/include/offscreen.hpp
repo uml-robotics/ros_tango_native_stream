@@ -25,10 +25,10 @@ extern int textureID;
 extern application_handle_t *application;
 
 void scrape(void *destination);
-void renderScrape(void *destionation, uint32_t w, uint32_t h);
+void renderScrape(void *destination, uint32_t w, uint32_t h);
 void initOffscreen(uint32_t w, uint32_t h, GLint *textureID);
 
-JNIEXPORT void JNICALL Java_edu_uml_OffscreenRenderer_dowork(JNIEnv *env, jobject caller);
+JNIEXPORT void JNICALL Java_edu_uml_OffscreenRenderer_renderFrame(JNIEnv *env, jobject caller);
 
 #ifdef __cplusplus
 }

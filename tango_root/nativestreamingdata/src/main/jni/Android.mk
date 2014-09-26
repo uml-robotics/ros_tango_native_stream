@@ -17,3 +17,17 @@ LOCAL_EXPORT_C_INCLUDES += $(LOCAL_PATH)/src \
 	$(LOCAL_PATH)/include
 LOCAL_LDLIBS += -llog -landroid -lEGL -lGLESv2
 include $(BUILD_SHARED_LIBRARY)
+
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := tango_camera_view
+LOCAL_SHARED_LIBRARIES += tango_api
+LOCAL_SRC_FILES := src/tango_camera_view.cpp
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/src \
+	$(LOCAL_PATH)/include
+LOCAL_EXPORT_C_INCLUDES += $(LOCAL_PATH)/src \
+	$(LOCAL_PATH)/include
+LOCAL_LDLIBS += -llog -landroid -lEGL -lGLESv2
+include $(BUILD_SHARED_LIBRARY)
+
+
