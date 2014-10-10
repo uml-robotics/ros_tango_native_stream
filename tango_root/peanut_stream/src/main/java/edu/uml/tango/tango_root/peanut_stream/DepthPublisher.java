@@ -81,13 +81,15 @@ public class DepthPublisher extends DepthReceiver implements NodeMain {
     }
 
     Image mImage;
+    std_msgs.Header mHeader;
     public void DepthCallback()
     {
         if (!okPublish || connectedNode == null)
             return;
         Time currentTime = connectedNode.getCurrentTime();
         if(depthPublisher != null && mImage != null && buffer !=null) {
-            mImage.getHeader().setStamp(currentTime);
+            mHeader.setStamp(currentTime);
+            mHeader.setSeq(mHeader.getSeq()+1);
             if (cb == null) {
                 cb = ChannelBuffers.wrappedBuffer(buffer);
                 mImage.setData(cb);
@@ -97,6 +99,7 @@ public class DepthPublisher extends DepthReceiver implements NodeMain {
             if (cameraInfoPublisher != null && mCameraInfo != null)
             {
                 mCameraInfo.getHeader().setStamp(currentTime);
+                mCameraInfo.getHeader().setSeq(mHeader.getSeq());
                 cameraInfoPublisher.publish(mCameraInfo);
             }
             if (mRateProvider != null)
@@ -142,7 +145,7 @@ public class DepthPublisher extends DepthReceiver implements NodeMain {
             cameraInfoPublisher.publish(mCameraInfo);
         }
         if (mImage !=null)
-            mImage.getHeader().setFrameId(frameId);
+            mHeader.setFrameId(frameId);
     }
 
     public void setOkPublish(boolean okPublish) {
@@ -158,6 +161,8 @@ public class DepthPublisher extends DepthReceiver implements NodeMain {
     public void onStart(ConnectedNode connectedNode) {
         this.connectedNode = connectedNode;
         mImage = connectedNode.getTopicMessageFactory().newFromType(Image._TYPE);
+        mHeader = mImage.getHeader();
+        mImage.setHeader(mHeader);
         mCameraInfo = connectedNode.getTopicMessageFactory().newFromType(CameraInfo._TYPE);
         setTopicName(initialTopicName);
         setFrameId(initialFrameId);
