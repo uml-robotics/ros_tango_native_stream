@@ -25,48 +25,37 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * Author: Eric McCann <emccann@cs.uml.edu>
+ * Author: Eric McCann <emccann@cs.uml.edu>, Eric Marcoux <emarcoux@cs.uml.edu>
 */
 #ifndef TANGO_API_JNI_H_
 #define TANGO_API_JNI_H_
 
-#include <string.h>
-#include <jni.h>
-#include <android/log.h>
-#include <stdarg.h>
-#include <math.h>
-#include <stdio.h>
-#include <tango-api/public-api.h>
-#include <tango-api/application-interface.h>
-#include <tango-api/hardware-control-interface.h>
-#include <tango-api/util-interface.h>
-#include <tango-api/depth-interface.h>
-#include <tango-api/video-overlay-interface.h>
-#include <tango-api/vio-interface.h>
-
 #define TAG "TangoJNI"
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
-#define LOGW(...) __android_log_print(ANDROID_LOG_WARN, TAG, __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
+#include <common.h>
 
-#define TANGO_DATA_SOURCE "[Superframes Small-Peanut]"
 #define DEPTH_BPP 1
 
-#define CHECK_FAIL(x) (x == kCAPIFail || x == kCAPINotImplemented || x == kCAPIOperationFailed)
-
+#define CHECK_FAIL(x) (x == TANGO_ERROR) // TangoErrorType
+#define TP_NATIVE_ACCEL // use pthread's condition variables instead of the standard libraries
 void setbufferlength(int length);
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-JNIEXPORT jboolean JNICALL Java_edu_uml_TangoAPI_init(JNIEnv *env);
-JNIEXPORT jboolean JNICALL Java_edu_uml_TangoAPI_deinit(JNIEnv *env);
-JNIEXPORT jobject JNICALL Java_edu_uml_TangoAPI_allocNativeBuffer(JNIEnv *env, jobject caller, jint size);
-JNIEXPORT void JNICALL Java_edu_uml_TangoAPI_freeNativeBuffer(JNIEnv *env, jobject caller);
-JNIEXPORT jint JNICALL Java_edu_uml_TangoAPI_dowork(JNIEnv *env, jobject caller);
-JNIEXPORT jobject JNICALL Java_edu_uml_TangoAPI_allocNativeOdomBuffer(JNIEnv *env, jobject caller);
-JNIEXPORT void JNICALL Java_edu_uml_TangoAPI_freeNativeOdomBuffer(JNIEnv *env, jobject caller);
+JNIEXPORT jobject JNICALL Java_edu_uml_TangoAPI_nAllocNativeImageBuffer(JNIEnv *env, jobject caller, jint size);
+JNIEXPORT void JNICALL Java_edu_uml_TangoAPI_nFreeNativeImageBuffer(JNIEnv *env, jobject caller);
+
+
+JNIEXPORT jint Java_edu_uml_TangoAPI_nStartTangoAPI(JNIEnv *env, jobject caller,
+                                                    jobject activity,
+                                                    jobject vioReciever,
+                                                    jobject imageReciever,
+                                                    jobject depthReciever,
+                                                    jobject exceptionHandler);
+JNIEXPORT jint Java_edu_uml_TangoAPI_nStopTangoAPI(JNIEnv *env, jobject caller);
+
+void *tangoApiThread(void* raw_args);
 
 #ifdef __cplusplus
 }

@@ -15,7 +15,7 @@
  */
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.11'
+    gradleVersion = '2.2.1'
 }
 
 buildscript {
@@ -33,7 +33,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath group: 'org.ros.rosjava_bootstrap', name: 'gradle_plugins', version: '[0.1,0.2)'
+        classpath group: 'org.ros.rosjava_bootstrap', name: 'gradle_plugins', version: '0.2.1'//'[0.1,0.2)'
     }
 }
 

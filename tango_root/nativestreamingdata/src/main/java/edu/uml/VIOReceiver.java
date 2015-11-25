@@ -33,9 +33,10 @@ package edu.uml;
 import java.nio.ByteBuffer;
 
 public abstract class VIOReceiver {
-    public ByteBuffer buffer;
+    public TangoAPI   tangoAPI;
 
-    public void VIOCallback()
+
+    public void VIOCallback(ByteBuffer buffer)
     {
     }
 }

@@ -20,7 +20,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.4.3'
+        classpath 'com.android.tools.build:gradle:1.0.0'
     }
 }
 
@@ -58,7 +58,10 @@ task ndkClean(type: Exec) {
     commandLine 'rm','-Rf','libs/armeabi'
 }
 
-tasks.withType(Compile) { compileTask -> compileTask.dependsOn ndkBuild }
+tasks.withType(JavaCompile) { compileTask -> compileTask.dependsOn ndkBuild }
 
 clean.dependsOn 'ndkClean'
  
+dependencies {
+    compile group: 'com.google.guava', name: 'guava', version: '15.0'
+}

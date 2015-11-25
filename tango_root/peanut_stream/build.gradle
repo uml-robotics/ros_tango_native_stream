@@ -30,6 +30,14 @@ dependencies {
   compile 'com.github.rosjava.android_extras:gingerbread:[0.1,0.2)'
 }
 */
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:1.1.0'
+    }
+}
 
 dependencies {
     //add dependency linking to the core android and rosjava libraries

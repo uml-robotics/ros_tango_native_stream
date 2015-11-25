@@ -25,43 +25,72 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * Author: Jordan Allspaw <jallspaw@cs.uml.edu>
+ * Author: Jordan Allspaw <jallspaw@cs.uml.edu>, Carlos Ibarra <clopez@cs.uml.edu>, Eric Marcoux<emarcoux@cs.uml.edu>
 */
 
 package edu.uml.tango.tango_root.peanut_stream;
 
-import android.content.res.Resources;
 import android.content.Context;
+import android.content.res.Resources;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.text.format.Formatter;
-import android.view.KeyEvent;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.ToggleButton;
+
 import org.ros.address.InetAddressFactory;
+import org.ros.android.view.camera.RosCameraPreviewView;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
-import java.nio.ByteBuffer;
+
 import android.util.Log;
 
+import edu.uml.CancelableDelayedTask;
 import edu.uml.TangoAPI;
+import edu.uml.TangoAPIException;
+import edu.uml.tango.tango_root.peanut_stream.ros.nodelets.DepthPublisher;
+import edu.uml.tango.tango_root.peanut_stream.ros.nodelets.ExceptionPublisher;
+import edu.uml.tango.tango_root.peanut_stream.ros.nodelets.ImagePublisher;
+import edu.uml.tango.tango_root.peanut_stream.ros.nodelets.PositionPublisher;
+import edu.uml.tango.tango_root.peanut_stream.ros.RosFragmentActivity;
 
 public class PeanutStream extends RosFragmentActivity implements RateWatcher.RateUpdater{
-    private PositionPublisher posePub;
-    private DepthPublisher depthPub;
+    private PositionPublisher        posePub;
+    private ImagePublisher           imagePub;
+    private DepthPublisher           depthPub;
+    private ExceptionPublisher       exceptionPub;
+    private RosCameraPreviewView     rosCamera;
+    private boolean                  hasMasterChooserRun;
+    private static int               TANGO_START_DELAY = 5000; // in mS, ie 5 Seconds
+    private CancelableDelayedTask    startTango;
+    private PopupWindow              apiStartingPopup;
+    private View                     apiStartingView;
+    private String                   tangoPrefix;
+    private EditText[] ets;
+    EditText tangoPrefixET;
+
     private static final String TAG = "TangoJNIActivity";
+
+
+
     public PeanutStream() {
         super("peanut_stream", "peanut_stream");
+        hasMasterChooserRun = false;
+        startTango = null;
     }
+
 
     RateWatcher mRateWatcher = new RateWatcher(this);
     private Handler mHandler = new Handler();
@@ -71,24 +100,15 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
     private void smartSet(View v, String str)
     {
         switch (v.getId()) {
-            case R.id.positionEditText:
-                posePub.setParentId(str);
-                savePreferences("e1_text",str);
-                break;
-            case R.id.positionFrameEditText:
-                posePub.setFrameId(str);
-                savePreferences("e2_text",str);
-                break;
-            case R.id.depthEditText:
-                depthPub.setTopicName(str);
-                savePreferences("e3_text",str);
-                break;
-            case R.id.depthFrameEditText:
-                depthPub.setFrameId(str);
-                savePreferences("e4_text",str);
+            case R.id.tangoPrefixEditText:
+                tangoPrefix = str;
+                depthPub.setTangoPrefix(str);
+                posePub.setTangoPrefix(str);
+                savePreferences("e5_text", str);
                 break;
         }
     }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,31 +121,34 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         if(posePub == null) {
-            posePub = new PositionPublisher();
+            posePub = new PositionPublisher(getResources().getString(R.string.tango_prefix));
             posePub.setParentId(sharedPreferences.getString("e1_text",getResources().getString(R.string.parent_id)));
-            posePub.setFrameId(sharedPreferences.getString("e2_text",getResources().getString(R.string.odom_frame_id)));
+            posePub.setOdomFrameId(sharedPreferences.getString("e2_text", getResources().getString(R.string.odom_frame_id)));
             posePub.setCameraId(sharedPreferences.getString("e4_text",getResources().getString(R.string.depth_frame_id)));
             posePub.setOkPublish(sharedPreferences.getBoolean("tb1_checked",false));
             posePub.setRateWatcher(mRateWatcher.add(R.id.odom_rate));
         }
+        if(imagePub == null) {
+            imagePub = new ImagePublisher(
+                    sharedPreferences.getString("e5_text", getResources().getString(R.string.tango_prefix)) + sharedPreferences.getString("image_topic", getResources().getString(R.string.image_topic)),
+                    sharedPreferences.getString("e5_text", getResources().getString(R.string.tango_prefix)) + sharedPreferences.getString("image_frame", getResources().getString(R.string.image_frame_id)));
+            imagePub.setOkPublish(true);
+        }
+        if(exceptionPub == null) {
+            exceptionPub = new ExceptionPublisher();
+        }
         if(depthPub == null) {
             depthPub = new DepthPublisher(sharedPreferences.getString("e3_text",getResources().getString(R.string.depth_topic)),
-                    sharedPreferences.getString("e4_text",getResources().getString(R.string.depth_frame_id)));
+                    sharedPreferences.getString("e4_text",getResources().getString(R.string.depth_frame_id)),
+                    sharedPreferences.getString("e5_text", getResources().getString(R.string.tango_prefix)));
             depthPub.setRateWatcher(mRateWatcher.add(R.id.depth_rate));
             depthPub.setOkPublish(sharedPreferences.getBoolean("tb2_checked",false));
         }
-        mTangoAPI = new TangoAPI(posePub, depthPub);
-        mTangoAPI.start();
 
-        EditText e1 = (EditText) findViewById(R.id.positionEditText);
-        EditText e2 = (EditText) findViewById(R.id.positionFrameEditText);
-        EditText e3 = (EditText) findViewById(R.id.depthEditText);
-        EditText e4 = (EditText) findViewById(R.id.depthFrameEditText);
-        e1.setText(sharedPreferences.getString("e1_text", getResources().getString(R.string.parent_id)));
-        e2.setText(sharedPreferences.getString("e2_text", getResources().getString(R.string.odom_frame_id)));
-        e3.setText(sharedPreferences.getString("e3_text", getResources().getString(R.string.depth_topic)));
-        e4.setText(sharedPreferences.getString("e4_text", getResources().getString(R.string.depth_frame_id)));
-        final EditText[] ets = new EditText[]{e1,e2,e3,e4};
+        tangoPrefixET = (EditText) findViewById(R.id.tangoPrefixEditText);
+        tangoPrefixET.setText(sharedPreferences.getString("e5_text", getResources().getString(R.string.tango_prefix)));
+        tangoPrefix = sharedPreferences.getString("e5_text", getResources().getString(R.string.tango_prefix));
+        ets = new EditText[]{tangoPrefixET};
 
         for(EditText et : ets) {
             et.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -137,26 +160,13 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
             });
         }
 
-        ToggleButton tb1 = (ToggleButton) findViewById(R.id.positionToggleButton);
-        ToggleButton tb2 = (ToggleButton) findViewById(R.id.depthToggleButton);
-
-        tb1.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        Button applyButton = (Button)findViewById(R.id.ApplyButton);
+        applyButton.setOnClickListener((new View.OnClickListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                posePub.setOkPublish(isChecked);
-                savePreferences("tb1_checked",isChecked);
+            public void onClick(View v) {
+                applyButton();
             }
-        });
-
-        tb2.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                depthPub.setOkPublish(isChecked);
-                savePreferences("tb2_checked",isChecked);
-            }
-        });
-        tb1.setChecked(sharedPreferences.getBoolean("tb1_checked",true));
-        tb2.setChecked(sharedPreferences.getBoolean("tb2_checked",true));
+        }));
 
         Button b = (Button) findViewById(R.id.gotoButton);
         b.setOnClickListener(new View.OnClickListener() {
@@ -165,22 +175,100 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
                 posePub.publishCurrent();
             }
         });
+
+        ToggleButton publishMapOdomTfButton = (ToggleButton) findViewById(R.id.mapOdomToggleButton);
+
+        publishMapOdomTfButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                posePub.setPublishMapToOdom(isChecked);
+            }
+        });
+
+
+        /*Camera cam = Camera.open(0);
+        rosCamera = (RosCameraPreviewView) findViewById(R.id.rosCamera);
+        rosCamera.setCamera(cam);*/
+
+
+        LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        apiStartingView = inflater.inflate(R.layout.tango_api_starting, (ViewGroup)findViewById(R.id.tango_api_starting_popup));
+        apiStartingPopup = new PopupWindow(apiStartingView, 1080,720, false);
+
+        startTango = new CancelableDelayedTask(new Runnable() {
+            @Override
+            public void run() {
+                if(mTangoAPI == null && hasMasterChooserRun) {
+                    if(TangoAPI.startTangoAPI(PeanutStream.this,
+                            posePub,
+                            imagePub,
+                            depthPub,
+                            exceptionPub) != TangoAPIException.SUCCESS) {
+                        Log.w(TAG, "tango api could not be started, "+
+                                "may already be started or it failed to start");
+                    }
+                    if((mTangoAPI = TangoAPI.getInstance()) == null)
+                        Log.w(TAG, "tango api failed to start");
+                    PeanutStream.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            apiStartingPopup.dismiss();
+                        }
+                    });
+
+                }
+            }
+        });
+    }
+
+    protected void applyButton()
+    {
+        if (ets != null)
+            for(EditText et : ets) {
+                smartSet(et, et.getText().toString());
+            }
     }
 
     @Override
-    protected void onDestroy()
+    protected void onPause()
     {
-        mTangoAPI.die();
-        super.onDestroy();
-        Log.e("peanut","WHOA WHOA, WE'RE GOING DOWN!");
+        startTango.cancel();
+        if (mTangoAPI != null) {
+            mTangoAPI.stopTangoAPI();
+            mTangoAPI = null;
+        }
+        super.onPause();
     }
+
+    @Override
+    protected void onResume()
+    {
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+
+        if(!startTango.schedule(TANGO_START_DELAY)) {
+            Log.w(TAG, "could not start tango api");
+        }
+        findViewById(R.id.main_layout).post(new Runnable() {
+            @Override
+            public void run() {
+                apiStartingPopup.showAtLocation(apiStartingView, Gravity.CENTER, 0, 0);
+            }
+        });
+
+        super.onResume();
+    }
+
 
     @Override
     protected void init(NodeMainExecutor nodeMainExecutor) {
+        hasMasterChooserRun = true;
         NodeConfiguration nodeConfiguration =
-                NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(),getMasterUri());
-        nodeMainExecutor.execute(posePub, nodeConfiguration);
-        nodeMainExecutor.execute(depthPub, nodeConfiguration);
+                NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
+        nodeMainExecutor.execute(posePub,      nodeConfiguration);
+        nodeMainExecutor.execute(imagePub,     nodeConfiguration);
+        nodeMainExecutor.execute(depthPub,     nodeConfiguration);
+        nodeMainExecutor.execute(exceptionPub, nodeConfiguration);
+        //nodeMainExecutor.execute(rosCamera,    nodeConfiguration);
     }
 
     @Override
@@ -210,9 +298,8 @@ public class PeanutStream extends RosFragmentActivity implements RateWatcher.Rat
         final Resources res = getResources();
         mHandler.post(new Runnable() {
             @Override
-            public void run()
-            {
-                tv.setText(String.format("%.3f %s",mRateWatcher.getRate(id),res.getString(R.string.frequency_suffix)));
+            public void run() {
+                tv.setText(String.format("%.3f %s", mRateWatcher.getRate(id), res.getString(R.string.frequency_suffix)));
             }
         });
     }

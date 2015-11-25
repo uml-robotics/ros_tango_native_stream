@@ -25,118 +25,107 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * Author: Eric McCann <emccann@cs.uml.edu>
+ * Author: Eric McCann <emccann@cs.uml.edu>, Eric Marcoux <emarcoux@cs.uml.edu>
 */
 package edu.uml;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
-import android.util.Log;
+import android.app.Activity;
 
-public class TangoAPI extends Thread {
+import com.google.common.base.Preconditions;
 
-    private final int UPDATED_DEPTH = 1 << 2;
-    private final int UPDATED_ODOM = 1 << 1;
+public class TangoAPI {
 
-    private VIOReceiver vioReceiver;
-    private DepthReceiver depthReceiver;
+    private static TangoAPI instance = null;
+    private static Object   instanceLock = new Object();
 
-    private boolean mBreakout = false;
+
+    private VIOReceiver              mVioReceiver;
+    private ImageReciever            mImageReciever;
+    private DepthReceiver            mDepthReceiver;
+    private TangoAPIExceptionHandler mTangoAPIExceptionHandler;
+    private Activity                 mActivity;
+
     private static final String TAG = "TangoApi";
-    private boolean ok = true;
 
-    public TangoAPI(VIOReceiver vrec, DepthReceiver drec) {
-        if (vrec == null) {
-            throw new IllegalArgumentException("TANGOAPI vioReceiver must not be null");
-        }
-        if (drec == null) {
-            throw new IllegalArgumentException("TANGOAPI depthReceiver must not be null");
-        }
-        vioReceiver = vrec;
-        vioReceiver.buffer = (ByteBuffer) allocNativeOdomBuffer();
-        vioReceiver.buffer.order(ByteOrder.LITTLE_ENDIAN);
-        depthReceiver = drec;
+    private TangoAPI(Activity activity,
+                    VIOReceiver vioReceiver,
+                    ImageReciever imageReciever,
+                    DepthReceiver depthReceiver,
+                    TangoAPIExceptionHandler tangoAPIExceptionHandler) {
+        Preconditions.checkNotNull(activity);
+        Preconditions.checkNotNull(vioReceiver);
+        Preconditions.checkNotNull(imageReciever);
+        Preconditions.checkNotNull(depthReceiver);
+        Preconditions.checkNotNull(tangoAPIExceptionHandler);
+        mActivity = activity;
+        mTangoAPIExceptionHandler = tangoAPIExceptionHandler;
+
+
+        mVioReceiver = vioReceiver;
+        mVioReceiver.tangoAPI = this;
+
+        mImageReciever = imageReciever;
+        mImageReciever.tangoAPI = this;
+
+        mDepthReceiver = depthReceiver;
+        mDepthReceiver.tangoAPI = this;
     }
+
+
+    public static int startTangoAPI(Activity activity,
+                                    VIOReceiver vioReceiver,
+                                    ImageReciever imageReciever,
+                                    DepthReceiver depthReceiver,
+                                    TangoAPIExceptionHandler tangoAPIExceptionHandler)
+                                        throws IllegalArgumentException
+    {
+        synchronized (instanceLock) {
+            if(instance == null) {
+                instance = new TangoAPI(activity, vioReceiver, imageReciever, depthReceiver, tangoAPIExceptionHandler);
+                return instance.nStartTangoAPI(instance.mActivity,
+                        instance.mVioReceiver,
+                        instance.mImageReciever,
+                        instance.mDepthReceiver,
+                        instance.mTangoAPIExceptionHandler);
+            }
+            return TangoAPIException.ERR_ALREADY_RUNNING;
+        }
+    }
+
+
+
+    public static TangoAPI getInstance() { synchronized (instanceLock) {return instance;}}
+
+    public int stopTangoAPI() {
+        synchronized (instanceLock) {
+            if(instance != null) {
+                int ret = instance.nStopTangoAPI();
+                instance = null;
+                return ret;
+            }
+            return TangoAPIException.ERR_ALREADY_STOPPED;
+        }
+    }
+
+    public void sendTheoraHeadersOnNextPublish() {
+        nSendTheoraHeaderOnNextPublish();
+    }
+
+
+
+    private native int nStartTangoAPI(Activity activity,
+                                         VIOReceiver vioReceiver,
+                                         ImageReciever imageReciever,
+                                         DepthReceiver depthReceiver,
+                                         TangoAPIExceptionHandler exceptionHandler);
+    private native int nStopTangoAPI();
+
+    private native int nSendTheoraHeaderOnNextPublish();
 
     static {
-        System.loadLibrary("tango_api");
+        System.loadLibrary("lfds611");
+        System.loadLibrary("tango_client_api");
         System.loadLibrary("tango_api_jni");
     }
-
-    /*
-     * Called from native-land when native-land thinks the bytebuffer size might be incorrect
-     */
-    public void setBufferLength(int length) {
-        Log.i(TAG, "Trying to change the size of our ByteBuffer to " + length);
-        if (depthReceiver != null) {
-            if (depthReceiver.buffer != null) {
-                depthReceiver.buffer.clear();
-                freeNativeBuffer();
-                depthReceiver.buffer = null;
-            }
-            if (length > 0) {
-                depthReceiver.buffer = (ByteBuffer) allocNativeBuffer(length);
-                depthReceiver.buffer.order(ByteOrder.LITTLE_ENDIAN);
-            }
-        }
-    }
-
-    public void die() {
-        Log.e(TAG, "DYING");
-        mBreakout = true;
-        try {
-            join();
-            setBufferLength(0);
-        }
-        catch(InterruptedException ie)
-        {
-            Log.e(TAG, "Interrupted while joining: ",ie);
-        }
-    }
-
-    @Override
-    public void start() {
-        Log.e(TAG, "STARTING");
-        mBreakout = false;
-        ok = true;
-        State currState = getState();
-        Log.e(TAG, "CURRENT THREAD STATE = " + currState.toString());
-        if ((currState == State.RUNNABLE || currState == State.NEW || currState == State.TERMINATED) && init())
-            super.start();
-    }
-
-    @Override
-    public void run() {
-        int res=0;
-        while (true) {
-            if (mBreakout) {
-                Log.e(TAG, "Breaking out");
-                break;
-            }
-            res = dowork();
-            if ((res & UPDATED_DEPTH) != 0)
-                depthReceiver.DepthCallback();
-            if ((res & UPDATED_ODOM) != 0)
-                vioReceiver.VIOCallback();
-            try {
-                Thread.sleep(33);
-            } catch (InterruptedException e) {
-                Log.e(TAG, "INSOMNIA", e);
-            }
-        }
-        Log.e(TAG, "Broke out");
-    }
-
-    public native Object allocNativeBuffer(int size);
-    public native void freeNativeBuffer();
-
-    public native Object allocNativeOdomBuffer();
-    public native void freeNativeOdomBuffer();
-
-    public native int dowork();
-
-    public static native boolean init();
-
-    public static native boolean deinit();
 }

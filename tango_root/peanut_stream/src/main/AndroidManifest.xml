@@ -1,43 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          xmlns:tools="http://schemas.android.com/tools"
-      package="edu.uml.tango.tango_root.peanut_stream"
-      android:versionCode="1"
-      android:versionName="1.0">
+    package="edu.uml.tango.tango_root.peanut_stream"
+    android:versionCode="1"
+    android:versionName="1.0" >
 
     <uses-sdk android:minSdkVersion="17" />
 
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
+
     <uses-feature android:name="android.hardware.camera" />
+
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
-        tools:replace="android:icon"
         android:label="@string/app_name"
-        android:icon="@drawable/ic_launcher">
+        android:largeHeap="true" >
+        <uses-library
+            android:name="com.projecttango.libtango_device"
+            android:required="true" />
+
         <activity
-            android:name="PeanutStream"
+            android:name=".PeanutStream"
             android:label="@string/app_name"
             android:screenOrientation="landscape"
-            android:theme="@android:style/Theme.Holo"
-            >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+            android:theme="@android:style/Theme.Holo" >
         </activity>
 
         <activity android:name="org.ros.android.MasterChooser" />
-
-         <service android:name="org.ros.android.NodeMainExecutorService" >
+        <service android:name="org.ros.android.NodeMainExecutorService" >
             <intent-filter>
                 <action android:name="org.ros.android.NodeMainExecutorService" />
             </intent-filter>
         </service>
 
+        <activity
+            android:name=".SplashScreen"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
     </application>
+
 </manifest>

@@ -34,9 +34,9 @@ package edu.uml;
 import java.nio.ByteBuffer;
 
 public abstract class DepthReceiver {
-    public ByteBuffer buffer;
+    public TangoAPI   tangoAPI;
 
-    public void DepthCallback()
+    public void DepthCallback(ByteBuffer buffer, ByteBuffer bufferLength)
     {
     }
 }
