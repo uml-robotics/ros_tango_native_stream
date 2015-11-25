@@ -1,0 +1,8 @@
+LOCAL_PATH := $(call my-dir)
+
+# liblfds611
+include $(CLEAR_VARS)
+LOCAL_MODULE := liblfds611
+LOCAL_SRC_FILES := $(TARGET_ARCH_ABI)/liblfds611.so
+LOCAL_EXPORT_C_INCLUDES += $(LOCAL_PATH)/include
+include $(PREBUILT_SHARED_LIBRARY)
