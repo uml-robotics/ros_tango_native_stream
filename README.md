@@ -1,5 +1,8 @@
 #ROS Tango Native Stream
 
+#Deprecated:
+This implementation is now deprecated on favor of https://github.com/uml-robotics/tango_ros_ndk, which uses a native port of ros for android, resulting in better performance. However, if someone has the need to use the old rosjava version, the yellowstone branch of this repository contains the old project before the switch to native ROS (master contains an even older project, for the first gen tango phones). 
+
 This is our implementation of using the C API to expose the simultaneous streaming of Tango Depth and Visual Odometry information to ROS.
 Since the Java services are being deprecated, we sought to create a good ROS alternative. We found the depth
 information to publish at 25hz and the oodometry at 5hz, which is the speed at which the information becomes
