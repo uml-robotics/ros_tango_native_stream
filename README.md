@@ -1,4 +1,8 @@
 #ROS Tango Native Stream
+
+#Deprecated:
+This implementation is now deprecated on favor of https://github.com/uml-robotics/tango_ros_ndk, which uses a native port of ros for android, resulting in better performance. However, if someone has the need to use the old rosjava version, the yellowstone branch of this repository contains the old project before the switch to native ROS (master contains an even older project, for the first gen tango phones). 
+
 This is our implementation of using the C API to expose the simultaneous streaming of Tango Depth and Visual Odometry information to ROS.
 The depth image is published to \<tango_prefix\>/depth with a  frame id of \<tango_prefix\>/tango_camera_depth. The odometry is published as a tf transform from \<tango_prefix\>/odom to \<tango_prefix\>/base_link, along with Odometry to \<tango_prefix\>/odom. The \<tango_prefix\> value is changeable in a textbox on the interface. There is also a setting (activated with the "publish map->odom tf" switch) to publish a transform from map to odom, this will initially cause a transform of value (0,0,0),(0,0,0,1) to be published, this can be changed by publishing a pose to \<tango_prefix\>/initialpose. This is useful to set the starting position, using RViz for example. When this setting is enabled, the current estimated pose will also be published to \<tango_prefix\>/amcl_pose (While useful to integrate with software that expects amcl to be running, it is NOT running amcl, just a copy of the map->base_link transform). 
 
